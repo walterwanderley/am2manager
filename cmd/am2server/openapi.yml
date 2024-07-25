@@ -19,20 +19,6 @@ paths:
       summary: AddCapture
       requestBody:
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: integer
-                  format: int64
-                name:
-                  type: string
-                description:
-                  type: string
-                data:
-                  type: string
-                  format: binary
           multipart/form-data:
             schema:
               type: object
@@ -160,13 +146,14 @@ paths:
           schema:
             type: integer
             format: int64
-      
       responses:
         "200":
           description: OK
           content:
-            application/json:
+            application/octet-stream:
               schema:
+                type: string
+                format: binary
           
         "default":    
           description: Error message

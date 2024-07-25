@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -24,9 +25,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -append
-
-const serviceName = "github.com/walterwanderley/am2manager/cmd/am2server"
+//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -i ^[a-z] -append
 
 var (
 	dbURL string
@@ -59,6 +58,12 @@ func run() error {
 		slog.Warn("startup", "error", err)
 	}
 	slog.Info("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
+
+	dbURL = os.ExpandEnv(dbURL)
+
+	if !strings.Contains(dbURL, "?") {
+		dbURL = dbURL + "?_pragma=busy_timeout(5000)&_pragma=sync(NORMAL)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_txlock=immediate"
+	}
 
 	db, err := sql.Open("sqlite", dbURL)
 	if err != nil {

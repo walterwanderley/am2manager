@@ -1,7 +1,7 @@
-/* name: AddCapture :execresult */
+/* name: addCapture :execresult */
 /* http: POST /captures */
-INSERT INTO capture(user_id, name, description, data)
-VALUES(?,?,?,?);
+INSERT INTO capture(user_id, name, description, data, am2_hash, data_hash)
+VALUES(?,?,?,?,?,?);
 
 /* name: RemoveCapture :execresult */
 /* http: DELETE /captures/{id} */
@@ -14,7 +14,7 @@ SELECT * FROM capture WHERE id = ?;
 /* name: GetCaptureFile :one */
 /* http: GET /captures/{id}/file */
 UPDATE capture SET downloads = downloads + 1 WHERE id = ?
-RETURNING data;
+RETURNING data, name;
 
 /* name: ListCaptures :many */
 /* http: GET /captures */

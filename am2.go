@@ -2,6 +2,7 @@ package am2manager
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 )
 
@@ -19,6 +20,20 @@ type Am2Data struct {
 	Mix        byte
 	Am2        []byte
 	OriginData []byte
+}
+
+func (d Am2Data) HashAm2() string {
+	hash := sha256.Sum256(d.Am2)
+	return fmt.Sprintf("%x", hash[:])
+}
+
+func (d Am2Data) HashData() string {
+	data, _ := d.MarshalBinary()
+	if len(data) == 0 {
+		return ""
+	}
+	hash := sha256.Sum256(data)
+	return fmt.Sprintf("%x", hash[:])
 }
 
 func (d Am2Data) MarshalBinary() ([]byte, error) {
@@ -46,21 +61,24 @@ func (d *Am2Data) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("am2data can't be nil")
 	}
 
-	if IsAm2Data(data) {
+	switch {
+	case IsAm2Data(data):
 		d.OriginData = data[0:60]
 		d.Am2 = data[60:]
 		d.Mix = data[0x12]
 		d.Level = data[0x13]
 		d.GainMax = data[0x14]
 		d.GainMin = data[0x15]
-		return nil
-	}
+	case IsAm2(data):
+		d.Am2 = data
+		d.Mix = 100
+		d.Level = 100
+		d.GainMax = 60
+		d.GainMin = 30
+	default:
+		return fmt.Errorf("invalid data type")
 
-	d.Am2 = data
-	d.Mix = 100
-	d.Level = 100
-	d.GainMax = 60
-	d.GainMin = 30
+	}
 	return nil
 }
 

@@ -11,28 +11,6 @@ import (
 	"time"
 )
 
-const addCapture = `-- name: AddCapture :execresult
-INSERT INTO capture(user_id, name, description, data)
-VALUES(?,?,?,?)
-`
-
-type AddCaptureParams struct {
-	UserID      sql.NullInt64
-	Name        string
-	Description sql.NullString
-	Data        []byte
-}
-
-// http: POST /captures
-func (q *Queries) AddCapture(ctx context.Context, arg AddCaptureParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, addCapture,
-		arg.UserID,
-		arg.Name,
-		arg.Description,
-		arg.Data,
-	)
-}
-
 const getCapture = `-- name: GetCapture :one
 SELECT id, user_id, name, description, am2_hash, data_hash, data, downloads, created_at, updated_at FROM capture WHERE id = ?
 `
@@ -58,15 +36,20 @@ func (q *Queries) GetCapture(ctx context.Context, id int64) (Capture, error) {
 
 const getCaptureFile = `-- name: GetCaptureFile :one
 UPDATE capture SET downloads = downloads + 1 WHERE id = ?
-RETURNING data
+RETURNING data, name
 `
 
+type GetCaptureFileRow struct {
+	Data []byte
+	Name string
+}
+
 // http: GET /captures/{id}/file
-func (q *Queries) GetCaptureFile(ctx context.Context, id int64) ([]byte, error) {
+func (q *Queries) GetCaptureFile(ctx context.Context, id int64) (GetCaptureFileRow, error) {
 	row := q.db.QueryRowContext(ctx, getCaptureFile, id)
-	var data []byte
-	err := row.Scan(&data)
-	return data, err
+	var i GetCaptureFileRow
+	err := row.Scan(&i.Data, &i.Name)
+	return i, err
 }
 
 const listCaptures = `-- name: ListCaptures :many
@@ -120,4 +103,30 @@ DELETE FROM capture WHERE id = ?
 // http: DELETE /captures/{id}
 func (q *Queries) RemoveCapture(ctx context.Context, id int64) (sql.Result, error) {
 	return q.db.ExecContext(ctx, removeCapture, id)
+}
+
+const addCapture = `-- name: addCapture :execresult
+INSERT INTO capture(user_id, name, description, data, am2_hash, data_hash)
+VALUES(?,?,?,?,?,?)
+`
+
+type addCaptureParams struct {
+	UserID      sql.NullInt64
+	Name        string
+	Description sql.NullString
+	Data        []byte
+	Am2Hash     string
+	DataHash    string
+}
+
+// http: POST /captures
+func (q *Queries) addCapture(ctx context.Context, arg addCaptureParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, addCapture,
+		arg.UserID,
+		arg.Name,
+		arg.Description,
+		arg.Data,
+		arg.Am2Hash,
+		arg.DataHash,
+	)
 }
