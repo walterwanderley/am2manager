@@ -1,4 +1,4 @@
-package main
+package am2manager
 
 import (
 	"bytes"
@@ -11,9 +11,9 @@ const (
 	am2Length     = 6144
 )
 
-var initData = [...]byte{0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 100, 60, 30, 0, 0, 0, 0, 200, 66, 0, 0, 192, 192, 0, 0, 192, 64, 0, 0, 250, 68, 0, 0, 192, 192, 0, 0, 192, 64, 0, 0, 122, 69, 0, 0, 192, 192, 0, 0, 192, 64}
+var InitData = [...]byte{0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 100, 60, 30, 0, 0, 0, 0, 200, 66, 0, 0, 192, 192, 0, 0, 192, 64, 0, 0, 250, 68, 0, 0, 192, 192, 0, 0, 192, 64, 0, 0, 122, 69, 0, 0, 192, 192, 0, 0, 192, 64}
 
-type am2data struct {
+type Am2Data struct {
 	Level      byte
 	GainMin    byte
 	GainMax    byte
@@ -22,12 +22,12 @@ type am2data struct {
 	OriginData []byte
 }
 
-func (d am2data) MarshalBinary() ([]byte, error) {
+func (d Am2Data) MarshalBinary() ([]byte, error) {
 	var buf bytes.Buffer
 	if len(d.OriginData) == 60 {
 		buf.Write(d.OriginData[:])
 	} else {
-		buf.Write(initData[:])
+		buf.Write(InitData[:])
 	}
 	buf.Write(d.Am2)
 	cp := buf.Bytes()
@@ -38,11 +38,11 @@ func (d am2data) MarshalBinary() ([]byte, error) {
 	return cp, nil
 }
 
-func (d am2data) String() string {
+func (d Am2Data) String() string {
 	return fmt.Sprintf("AM2DATA: Level = %d Mix = %d\nGainMin = %d GainMax = %d", d.Level, d.Mix, d.GainMin, d.GainMax)
 }
 
-func (d *am2data) UnmarshalBinary(data []byte) error {
+func (d *Am2Data) UnmarshalBinary(data []byte) error {
 	if d == nil {
 		return fmt.Errorf("am2data can't be nil")
 	}
@@ -81,7 +81,7 @@ func main() {
 	if !IsAm2(all) && !IsAm2Data(all) {
 		panic("invalid file type")
 	}
-	var am2 am2data
+	var am2 Am2Data
 	err = am2.UnmarshalBinary(all)
 	if err != nil {
 		panic(err)
