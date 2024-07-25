@@ -1,0 +1,105 @@
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+)
+
+const (
+	am2dataLength = 6204
+	am2Length     = 6144
+)
+
+var initData = [...]byte{0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 100, 60, 30, 0, 0, 0, 0, 200, 66, 0, 0, 192, 192, 0, 0, 192, 64, 0, 0, 250, 68, 0, 0, 192, 192, 0, 0, 192, 64, 0, 0, 122, 69, 0, 0, 192, 192, 0, 0, 192, 64}
+
+type am2data struct {
+	Level      byte
+	GainMin    byte
+	GainMax    byte
+	Mix        byte
+	Am2        []byte
+	OriginData []byte
+}
+
+func (d am2data) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	if len(d.OriginData) == 60 {
+		buf.Write(d.OriginData[:])
+	} else {
+		buf.Write(initData[:])
+	}
+	buf.Write(d.Am2)
+	cp := buf.Bytes()
+	cp[0x12] = d.Mix
+	cp[0x13] = d.Level
+	cp[0x14] = d.GainMax
+	cp[0x15] = d.GainMin
+	return cp, nil
+}
+
+func (d am2data) String() string {
+	return fmt.Sprintf("AM2DATA: Level = %d Mix = %d\nGainMin = %d GainMax = %d", d.Level, d.Mix, d.GainMin, d.GainMax)
+}
+
+func (d *am2data) UnmarshalBinary(data []byte) error {
+	if d == nil {
+		return fmt.Errorf("am2data can't be nil")
+	}
+
+	if IsAm2Data(data) {
+		d.OriginData = data[0:60]
+		d.Am2 = data[60:]
+		d.Mix = data[0x12]
+		d.Level = data[0x13]
+		d.GainMax = data[0x14]
+		d.GainMin = data[0x15]
+		return nil
+	}
+
+	d.Am2 = data
+	d.Mix = 100
+	d.Level = 100
+	d.GainMax = 60
+	d.GainMin = 30
+	return nil
+}
+
+func IsAm2(data []byte) bool {
+	return len(data) == am2Length
+}
+
+func IsAm2Data(data []byte) bool {
+	return len(data) == am2dataLength
+}
+
+func main() {
+	all, err := os.ReadFile("default.am2Data")
+	if err != nil {
+		panic(err)
+	}
+	if !IsAm2(all) && !IsAm2Data(all) {
+		panic("invalid file type")
+	}
+	var am2 am2data
+	err = am2.UnmarshalBinary(all)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(am2)
+	am2.Level = 42
+	am2.GainMin = 3
+	am2.GainMax = 88
+	am2.Mix = 67
+
+	data, err := am2.MarshalBinary()
+	if err != nil {
+		panic(err)
+	}
+
+	if err := os.WriteFile("example.am2Data", data, os.ModePerm); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("OK")
+}
