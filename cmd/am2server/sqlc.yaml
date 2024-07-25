@@ -1,0 +1,20 @@
+version: "2"
+sql:
+- schema: "./sql/migrations"
+  queries: "./sql/capture.sql"
+  engine: "sqlite"
+  gen:
+    go:
+      out: "internal/capture"
+- schema: "./sql/migrations"
+  queries: "./sql/review.sql"
+  engine: "sqlite"
+  gen:
+    go:
+      out: "internal/review"
+- schema: "./sql/migrations"
+  queries: "./sql/user.sql"
+  engine: "sqlite"
+  gen:
+    go:
+      out: "internal/user"      

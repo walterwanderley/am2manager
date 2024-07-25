@@ -1,0 +1,641 @@
+openapi: 3.0.3
+info:
+  description: github.com/walterwanderley/am2manager/cmd/am2server Services
+  title: github.com/walterwanderley/am2manager/cmd/am2server
+  version: 0.0.1
+  contact:
+    name: sqlc-http
+    url: https://github.com/walterwanderley/sqlc-http
+tags:
+  - capture
+  - review
+  - user
+  
+paths:
+  /captures:
+    post:
+      tags:
+        - capture
+      summary: AddCapture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+                name:
+                  type: string
+                description:
+                  type: string
+                data:
+                  type: string
+                  format: binary
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+                name:
+                  type: string
+                description:
+                  type: string
+                data:
+                  type: string
+                  format: binary          
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    get:
+      tags:
+        - capture
+      summary: ListCaptures
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/captureListCapturesRow"
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /captures/{id}:
+    get:
+      tags:
+        - capture
+      summary: GetCapture
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/captureCapture"
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    delete:
+      tags:
+        - capture
+      summary: RemoveCapture
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /captures/{id}/file:
+    get:
+      tags:
+        - capture
+      summary: GetCaptureFile
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /captures/{capture_id}/reviews:
+    get:
+      tags:
+        - review
+      summary: ListReviewsByCapture
+      parameters:
+        - name: capture_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/reviewReview"
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /reviews:
+    post:
+      tags:
+        - review
+      summary: AddReview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+                capture_id:
+                  type: integer
+                  format: int64
+                rate:
+                  type: integer
+                  format: int64
+                comment:
+                  type: string
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+                capture_id:
+                  type: integer
+                  format: int64
+                rate:
+                  type: integer
+                  format: int64
+                comment:
+                  type: string
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /reviews/{id}:
+    delete:
+      tags:
+        - review
+      summary: RemoveReview
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /users/{user_id}/reviews:
+    get:
+      tags:
+        - review
+      summary: ListReviewsByUser
+      parameters:
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/reviewReview"
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /users:
+    post:
+      tags:
+        - user
+      summary: AddUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                email:
+                  type: string
+                pass:
+                  type: string
+                status:
+                  type: string
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                email:
+                  type: string
+                pass:
+                  type: string
+                status:
+                  type: string
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /users/count:
+    get:
+      tags:
+        - user
+      summary: ContUsers
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /users/{id}:
+    get:
+      tags:
+        - user
+      summary: GetUser
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/userUser"
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    delete:
+      tags:
+        - user
+      summary: RemoveUser
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /users/{id}/pass:
+    patch:
+      tags:
+        - user
+      summary: SetUserPassword
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pass:
+                  type: string
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                pass:
+                  type: string
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /users/{id}/token/{pass}:
+    get:
+      tags:
+        - user
+      summary: ValidateUserEmail
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+            format: int64
+        - name: pass
+          in: path
+          schema:
+            type: string
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  
+components:
+  schemas:
+    captureCapture:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        am2_hash:
+          type: string
+        data_hash:
+          type: string
+        data:
+          type: string
+          format: binary
+        downloads:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    captureListCapturesRow:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        downloads:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+    reviewReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        capture_id:
+          type: integer
+          format: int64
+        rate:
+          type: integer
+          format: int64
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    userUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        login:
+          type: string
+        email:
+          type: string
+        pass:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+  
