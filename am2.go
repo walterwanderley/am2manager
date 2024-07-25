@@ -3,7 +3,6 @@ package am2manager
 import (
 	"bytes"
 	"fmt"
-	"os"
 )
 
 const (
@@ -71,35 +70,4 @@ func IsAm2(data []byte) bool {
 
 func IsAm2Data(data []byte) bool {
 	return len(data) == am2dataLength
-}
-
-func main() {
-	all, err := os.ReadFile("default.am2Data")
-	if err != nil {
-		panic(err)
-	}
-	if !IsAm2(all) && !IsAm2Data(all) {
-		panic("invalid file type")
-	}
-	var am2 Am2Data
-	err = am2.UnmarshalBinary(all)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(am2)
-	am2.Level = 42
-	am2.GainMin = 3
-	am2.GainMax = 88
-	am2.Mix = 67
-
-	data, err := am2.MarshalBinary()
-	if err != nil {
-		panic(err)
-	}
-
-	if err := os.WriteFile("example.am2Data", data, os.ModePerm); err != nil {
-		panic(err)
-	}
-
-	fmt.Println("OK")
 }
