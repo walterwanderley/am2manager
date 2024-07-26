@@ -5,7 +5,7 @@ package main
 import (
 	"context"
 	"database/sql"
-	_ "embed"
+	"embed"
 	"errors"
 	"flag"
 	"fmt"
@@ -23,20 +23,25 @@ import (
 
 	// database driver
 	_ "modernc.org/sqlite"
+
+	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/etag"
+	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
 )
 
-//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -i ^[a-z] -append
+//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -go.mod ../../go.mod -i ^[a-z],GetCaptureFile -append
 
 var (
 	dbURL string
+	dev   bool
 	port  int
 
 	//go:embed openapi.yml
 	openAPISpec []byte
+	//go:embed web
+	webFS embed.FS
 )
 
 func main() {
-	var dev bool
 	flag.StringVar(&dbURL, "db", "", "The Database connection URL")
 	flag.IntVar(&port, "port", 5000, "The server port")
 
@@ -44,7 +49,7 @@ func main() {
 
 	flag.Parse()
 
-	initLogger(dev)
+	initLogger()
 
 	if err := run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("server error", "error", err)
@@ -77,7 +82,13 @@ func run() error {
 
 	mux := http.NewServeMux()
 	registerHandlers(mux, db)
-	mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.Handler(openAPISpec)))
+	mux.Handle("GET /swagger/", http.StripPrefix("/swagger", swaggerui.Handler(openAPISpec)))
+	if dev {
+		mux.Handle("GET /web/", http.StripPrefix("/web", http.FileServer(http.FS(os.DirFS("web")))))
+	} else {
+		mux.Handle("GET /web/", etag.Handler(webFS, ""))
+	}
+	templates.RegisterHandlers(mux, dev)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -98,7 +109,7 @@ func run() error {
 	return server.ListenAndServe()
 }
 
-func initLogger(dev bool) {
+func initLogger() {
 	var handler slog.Handler
 	opts := slog.HandlerOptions{
 		AddSource: true,

@@ -15,10 +15,6 @@ type Service struct {
 	querier *Queries
 }
 
-func NewService(querier *Queries) *Service {
-	return &Service{querier: querier}
-}
-
 func (s *Service) handleAddUser() http.HandlerFunc {
 	type request struct {
 		Login  string `form:"login" json:"login"`

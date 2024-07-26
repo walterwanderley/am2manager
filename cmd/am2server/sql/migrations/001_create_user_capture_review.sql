@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS capture (
     user_id     INTEGER,
     name        TEXT NOT NULL UNIQUE,
     description TEXT,
+    type        TEXT NOT NULL,
+    has_cab     BOOL,
     am2_hash    TEXT NOT NULL,
     data_hash   TEXT NOT NULL UNIQUE,
     data        BLOB NOT NULL,
@@ -23,7 +25,8 @@ CREATE TABLE IF NOT EXISTS capture (
     updated_at  DATETIME,
     FOREIGN KEY (user_id)
         REFERENCES user(id)
-            ON DELETE SET NULL
+            ON DELETE SET NULL,
+    CHECK (type = 'CLEAN' OR type = 'CRUNCH' OR type = 'HI-GAIN')
 );
 
 CREATE TABLE IF NOT EXISTS user_favorite (    

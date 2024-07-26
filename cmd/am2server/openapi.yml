@@ -1,63 +1,113 @@
 openapi: 3.0.3
 info:
-  description: github.com/walterwanderley/am2manager/cmd/am2server Services
-  title: github.com/walterwanderley/am2manager/cmd/am2server
-  version: 0.0.1
   contact:
-    name: sqlc-http
-    url: https://github.com/walterwanderley/sqlc-http
+      name: sqlc-http
+      url: https://github.com/walterwanderley/sqlc-http
+  description: Manage and share am2/am2data (SincoANN profile) files
+  title: am2 Server
+  version: 0.0.1
+  
+  
 tags:
   - capture
   - review
   - user
   
+  
 paths:
-  /captures:
-    post:
-      tags:
-        - capture
-      summary: AddCapture
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: integer
+  /captures-upload:
+      post:
+          requestBody:
+              content:
+                  multipart/form-data:
+                      schema:
+                          properties:
+                              data:
+                                  format: binary
+                                  type: string
+                              description:
+                                  type: string
+                              has_cab:
+                                  type: boolean
+                              name:
+                                  type: string
+                              type:
+                                  type: string
+                              user_id:
+                                  format: int64
+                                  type: integer
+                          type: object
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              properties:
+                                  last_insert_id:
+                                      format: int64
+                                      type: integer
+                                  rows_affected:
+                                      format: int64
+                                      type: integer
+                              type: object
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: AddCapture
+          tags:
+              - capture
+  /captures/{id}/file:
+      get:
+          parameters:
+              - in: path
+                name: id
+                schema:
                   format: int64
-                name:
-                  type: string
-                description:
-                  type: string
-                data:
-                  type: string
-                  format: binary          
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  last_insert_id:
-                    type: integer
-                    format: int64
-                  rows_affected:
-                    type: integer
-                    format: int64
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
+                  type: integer
+          responses:
+              "200":
+                  content:
+                      application/octet-stream:
+                          schema:
+                              format: binary
+                              type: string
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: GetCaptureFile
+          tags:
+              - capture
+  
+  /captures:
     get:
+      summary: SearchCaptures
       tags:
-        - capture
-      summary: ListCaptures
+          - capture
+      
+      
+      parameters:
+        - name: arg
+          in: query
+          schema:
+            type: string
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int64
       
       responses:
         "200":
@@ -67,7 +117,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/captureListCapturesRow"
+                  $ref: "#/components/schemas/captureSearchCapturesRow"
           
         "default":    
           description: Error message
@@ -78,9 +128,11 @@ paths:
     
   /captures/{id}:
     get:
-      tags:
-        - capture
       summary: GetCapture
+      tags:
+          - capture
+      
+      
       parameters:
         - name: id
           in: path
@@ -103,9 +155,11 @@ paths:
               schema:
                 type: string  
     delete:
-      tags:
-        - capture
       summary: RemoveCapture
+      tags:
+          - capture
+      
+      
       parameters:
         - name: id
           in: path
@@ -135,38 +189,13 @@ paths:
               schema:
                 type: string  
     
-  /captures/{id}/file:
-    get:
-      tags:
-        - capture
-      summary: GetCaptureFile
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: OK
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
   /captures/{capture_id}/reviews:
     get:
-      tags:
-        - review
       summary: ListReviewsByCapture
+      tags:
+          - review
+      
+      
       parameters:
         - name: capture_id
           in: path
@@ -193,9 +222,11 @@ paths:
     
   /reviews:
     post:
-      tags:
-        - review
       summary: AddReview
+      tags:
+          - review
+      
+      
       requestBody:
         content:
           application/json:
@@ -253,9 +284,11 @@ paths:
     
   /reviews/{id}:
     delete:
-      tags:
-        - review
       summary: RemoveReview
+      tags:
+          - review
+      
+      
       parameters:
         - name: id
           in: path
@@ -287,9 +320,11 @@ paths:
     
   /users/{user_id}/reviews:
     get:
-      tags:
-        - review
       summary: ListReviewsByUser
+      tags:
+          - review
+      
+      
       parameters:
         - name: user_id
           in: path
@@ -316,9 +351,11 @@ paths:
     
   /users:
     post:
-      tags:
-        - user
       summary: AddUser
+      tags:
+          - user
+      
+      
       requestBody:
         content:
           application/json:
@@ -370,9 +407,11 @@ paths:
     
   /users/count:
     get:
-      tags:
-        - user
       summary: ContUsers
+      tags:
+          - user
+      
+      
       
       responses:
         "200":
@@ -390,9 +429,11 @@ paths:
     
   /users/{id}:
     get:
-      tags:
-        - user
       summary: GetUser
+      tags:
+          - user
+      
+      
       parameters:
         - name: id
           in: path
@@ -415,9 +456,11 @@ paths:
               schema:
                 type: string  
     delete:
-      tags:
-        - user
       summary: RemoveUser
+      tags:
+          - user
+      
+      
       parameters:
         - name: id
           in: path
@@ -449,9 +492,11 @@ paths:
     
   /users/{id}/pass:
     patch:
-      tags:
-        - user
       summary: SetUserPassword
+      tags:
+          - user
+      
+      
       parameters:
         - name: id
           in: path
@@ -497,9 +542,11 @@ paths:
     
   /users/{id}/token/{pass}:
     get:
-      tags:
-        - user
       summary: ValidateUserEmail
+      tags:
+          - user
+      
+      
       parameters:
         - name: id
           in: path
@@ -536,6 +583,23 @@ paths:
   
 components:
   schemas:
+    captureListCapturesRow:
+        properties:
+            created_at:
+                format: date-time
+                type: string
+            description:
+                type: string
+            downloads:
+                format: int64
+                type: integer
+            id:
+                format: int64
+                type: integer
+            name:
+                type: string
+        type: object
+    
     captureCapture:
       type: object
       properties:
@@ -549,6 +613,10 @@ components:
           type: string
         description:
           type: string
+        type:
+          type: string
+        has_cab:
+          type: boolean
         am2_hash:
           type: string
         data_hash:
@@ -565,7 +633,7 @@ components:
         updated_at:
           type: string
           format: date-time
-    captureListCapturesRow:
+    captureSearchCapturesRow:
       type: object
       properties:
         id:
@@ -578,6 +646,13 @@ components:
         downloads:
           type: integer
           format: int64
+        fav:
+          type: integer
+          format: int64
+        has_cab:
+          type: boolean
+        type:
+          type: string
         created_at:
           type: string
           format: date-time

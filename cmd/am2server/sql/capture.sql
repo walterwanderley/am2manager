@@ -1,7 +1,6 @@
 /* name: addCapture :execresult */
-/* http: POST /captures */
-INSERT INTO capture(user_id, name, description, data, am2_hash, data_hash)
-VALUES(?,?,?,?,?,?);
+INSERT INTO capture(user_id, name, description, type, has_cab, data, am2_hash, data_hash)
+VALUES(?,?,?,?,?,?,?,?);
 
 /* name: RemoveCapture :execresult */
 /* http: DELETE /captures/{id} */
@@ -16,8 +15,11 @@ SELECT * FROM capture WHERE id = ?;
 UPDATE capture SET downloads = downloads + 1 WHERE id = ?
 RETURNING data, name;
 
-/* name: ListCaptures :many */
+/* name: SearchCaptures :many */
 /* http: GET /captures */
-SELECT id, name, description, downloads, created_at 
-FROM capture
-ORDER BY downloads, created_at DESC;
+SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.has_cab, c.type, c.created_at 
+FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
+WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
+GROUP BY f.capture_id
+ORDER BY c.downloads, c.created_at DESC
+LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');

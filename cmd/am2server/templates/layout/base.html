@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
+    <title>Tank-G and BlackBox Profiles</title>
+
+    <!-- CSS  -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="/web/css/materialize.min.css" type="text/css" rel="stylesheet" media="screen,projection" />
+    <link href="/web/css/style.css" type="text/css" rel="stylesheet" media="screen,projection" />
+</head>
+
+<body>
+    {{ template "header.html" .}}
+
+    <div class="container">
+        <div class="section" id="main-section">
+            {{ template "content" .Content}}
+        </div>
+        <br><br>
+    </div>
+
+    {{ template "footer.html" .}}
+
+    <!--  Scripts-->
+    {{if .DevMode}}
+    <script>
+        var evtSource = new EventSource("/reload");
+        evtSource.onmessage = function (event) {
+            window.location.reload(true);
+        };
+        evtSource.onerror = function (err) {
+            console.error("EventSource failed:", err);
+        };
+    </script>
+    {{end}}
+    <script src="/web/js/jquery-2.1.1.min.js"></script>
+    <script src="/web/js/materialize.min.js"></script>
+    <script src="/web/js/htmx.min.js"></script>
+    <script src="/web/js/init.js"></script>
+</body>
+
+</html>

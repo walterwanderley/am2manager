@@ -5,10 +5,12 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/form/v4"
+	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
 )
 
 var formDecoder = form.NewDecoder()
@@ -38,6 +40,12 @@ func Decode[T any](r *http.Request) (T, error) {
 }
 
 func Encode[T any](w http.ResponseWriter, r *http.Request, status int, v T) error {
+	if !strings.Contains(r.Header.Get("Accept"), "application/json") {
+		if err := templates.RenderHTML(w, r, v); err != nil {
+			slog.Error("render html", "error", err)
+		}
+		return nil
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {

@@ -16,10 +16,6 @@ type Service struct {
 	querier *Queries
 }
 
-func NewService(querier *Queries) *Service {
-	return &Service{querier: querier}
-}
-
 func (s *Service) handleAddReview() http.HandlerFunc {
 	type request struct {
 		UserID    *int64  `form:"user_id" json:"user_id"`

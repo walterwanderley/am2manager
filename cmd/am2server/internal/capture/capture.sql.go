@@ -12,7 +12,7 @@ import (
 )
 
 const getCapture = `-- name: GetCapture :one
-SELECT id, user_id, name, description, am2_hash, data_hash, data, downloads, created_at, updated_at FROM capture WHERE id = ?
+SELECT id, user_id, name, description, type, has_cab, am2_hash, data_hash, data, downloads, created_at, updated_at FROM capture WHERE id = ?
 `
 
 // http: GET /captures/{id}
@@ -24,6 +24,8 @@ func (q *Queries) GetCapture(ctx context.Context, id int64) (Capture, error) {
 		&i.UserID,
 		&i.Name,
 		&i.Description,
+		&i.Type,
+		&i.HasCab,
 		&i.Am2Hash,
 		&i.DataHash,
 		&i.Data,
@@ -52,35 +54,59 @@ func (q *Queries) GetCaptureFile(ctx context.Context, id int64) (GetCaptureFileR
 	return i, err
 }
 
-const listCaptures = `-- name: ListCaptures :many
-SELECT id, name, description, downloads, created_at 
-FROM capture
-ORDER BY downloads, created_at DESC
+const removeCapture = `-- name: RemoveCapture :execresult
+DELETE FROM capture WHERE id = ?
 `
 
-type ListCapturesRow struct {
+// http: DELETE /captures/{id}
+func (q *Queries) RemoveCapture(ctx context.Context, id int64) (sql.Result, error) {
+	return q.db.ExecContext(ctx, removeCapture, id)
+}
+
+const searchCaptures = `-- name: SearchCaptures :many
+SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.has_cab, c.type, c.created_at 
+FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
+WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
+GROUP BY f.capture_id
+ORDER BY c.downloads, c.created_at DESC
+LIMIT ?3 OFFSET ?2
+`
+
+type SearchCapturesParams struct {
+	Arg    sql.NullString
+	Offset int64
+	Limit  int64
+}
+
+type SearchCapturesRow struct {
 	ID          int64
 	Name        string
 	Description sql.NullString
 	Downloads   int64
+	Fav         int64
+	HasCab      sql.NullBool
+	Type        string
 	CreatedAt   time.Time
 }
 
 // http: GET /captures
-func (q *Queries) ListCaptures(ctx context.Context) ([]ListCapturesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCaptures)
+func (q *Queries) SearchCaptures(ctx context.Context, arg SearchCapturesParams) ([]SearchCapturesRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchCaptures, arg.Arg, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListCapturesRow
+	var items []SearchCapturesRow
 	for rows.Next() {
-		var i ListCapturesRow
+		var i SearchCapturesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Description,
 			&i.Downloads,
+			&i.Fav,
+			&i.HasCab,
+			&i.Type,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -96,35 +122,29 @@ func (q *Queries) ListCaptures(ctx context.Context) ([]ListCapturesRow, error) {
 	return items, nil
 }
 
-const removeCapture = `-- name: RemoveCapture :execresult
-DELETE FROM capture WHERE id = ?
-`
-
-// http: DELETE /captures/{id}
-func (q *Queries) RemoveCapture(ctx context.Context, id int64) (sql.Result, error) {
-	return q.db.ExecContext(ctx, removeCapture, id)
-}
-
 const addCapture = `-- name: addCapture :execresult
-INSERT INTO capture(user_id, name, description, data, am2_hash, data_hash)
-VALUES(?,?,?,?,?,?)
+INSERT INTO capture(user_id, name, description, type, has_cab, data, am2_hash, data_hash)
+VALUES(?,?,?,?,?,?,?,?)
 `
 
 type addCaptureParams struct {
 	UserID      sql.NullInt64
 	Name        string
 	Description sql.NullString
+	Type        string
+	HasCab      sql.NullBool
 	Data        []byte
 	Am2Hash     string
 	DataHash    string
 }
 
-// http: POST /captures
 func (q *Queries) addCapture(ctx context.Context, arg addCaptureParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, addCapture,
 		arg.UserID,
 		arg.Name,
 		arg.Description,
+		arg.Type,
+		arg.HasCab,
 		arg.Data,
 		arg.Am2Hash,
 		arg.DataHash,

@@ -1,0 +1,13 @@
+<nav class="light-blue lighten-1" role="navigation">
+    <div class="nav-wrapper">
+        <a id="logo-container" hx-get="/" hx-push-url="true" hx-target="#main-section" class="brand-logo">Am2 / Am2Data</a>
+      <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+      <ul class="right hide-on-med-and-down">
+        <li><a hx-get="/new-capture" hx-push-url="true" hx-target="#main-section"><i class="material-icons left">upload</i>Upload Capture</a></li>        
+      </ul>
+    </div>
+  </nav>
+
+  <ul class="sidenav" id="mobile-demo">
+    <li><a hx-get="/new-capture" hx-push-url="true" hx-target="#main-section"><i class="material-icons left">upload</i>Upload Capture</a></li>    
+  </ul>

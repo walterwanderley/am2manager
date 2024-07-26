@@ -4,6 +4,7 @@ go 1.22.5
 
 require (
 	github.com/flowchartsman/swaggerui v0.0.0-20221017034628-909ed4f3701b
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/form/v4 v4.2.1
 	github.com/pressly/goose/v3 v3.21.1
 	go.uber.org/automaxprocs v1.5.3

@@ -14,6 +14,8 @@ type Capture struct {
 	UserID      sql.NullInt64
 	Name        string
 	Description sql.NullString
+	Type        string
+	HasCab      sql.NullBool
 	Am2Hash     string
 	DataHash    string
 	Data        []byte
