@@ -25,6 +25,8 @@ paths:
                               data:
                                   format: binary
                                   type: string
+                              demo_link:
+                                  type: string
                               description:
                                   type: string
                               has_cab:
@@ -58,6 +60,30 @@ paths:
                               type: string
                   description: Error message
           summary: AddCapture
+          tags:
+              - capture
+  /captures/{id}:
+      get:
+          parameters:
+              - in: path
+                name: id
+                schema:
+                  format: int64
+                  type: integer
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              $ref: '#/components/schemas/captureCustomCapture'
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: GetCapture
           tags:
               - capture
   /captures/{id}/file:
@@ -118,69 +144,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/captureSearchCapturesRow"
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
-  /captures/{id}:
-    get:
-      summary: GetCapture
-      tags:
-          - capture
-      
-      
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/captureCapture"
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    delete:
-      summary: RemoveCapture
-      tags:
-          - capture
-      
-      
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  last_insert_id:
-                    type: integer
-                    format: int64
-                  rows_affected:
-                    type: integer
-                    format: int64
           
         "default":    
           description: Error message
@@ -583,6 +546,39 @@ paths:
   
 components:
   schemas:
+    captureCustomCapture:
+        properties:
+            am2_hash:
+                type: string
+            created_at:
+                format: date-time
+                type: string
+            data:
+                format: binary
+                type: string
+            data_hash:
+                type: string
+            description:
+                type: string
+            downloads:
+                format: int64
+                type: integer
+            has_cab:
+                type: boolean
+            id:
+                format: int64
+                type: integer
+            name:
+                type: string
+            type:
+                type: string
+            updated_at:
+                format: date-time
+                type: string
+            user_id:
+                format: int64
+                type: integer
+        type: object
     captureListCapturesRow:
         properties:
             created_at:
@@ -600,39 +596,6 @@ components:
                 type: string
         type: object
     
-    captureCapture:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        user_id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        description:
-          type: string
-        type:
-          type: string
-        has_cab:
-          type: boolean
-        am2_hash:
-          type: string
-        data_hash:
-          type: string
-        data:
-          type: string
-          format: binary
-        downloads:
-          type: integer
-          format: int64
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
     captureSearchCapturesRow:
       type: object
       properties:

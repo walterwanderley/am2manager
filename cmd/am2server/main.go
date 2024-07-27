@@ -28,7 +28,7 @@ import (
 	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
 )
 
-//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -go.mod ../../go.mod -i ^[a-z],GetCaptureFile -append
+//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -go.mod ../../go.mod -i ^[a-z],GetCapture -append
 
 var (
 	dbURL string

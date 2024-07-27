@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS capture (
     data_hash   TEXT NOT NULL UNIQUE,
     data        BLOB NOT NULL,
     downloads   INTEGER NOT NULL DEFAULT 0,
+    demo_link   TEXT,
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME,
     FOREIGN KEY (user_id)
@@ -58,7 +59,15 @@ CREATE TABLE IF NOT EXISTS review (
             ON DELETE CASCADE      
 );
 
+CREATE TABLE IF NOT EXISTS protected_am2 (
+    am2_hash   TEXT NOT NULL PRIMARY KEY,
+    ref        TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK (length(am2_hash) = 64)
+);
+
 -- +goose Down
+DROP TABLE IF EXISTS protected_am2;
 DROP TABLE IF EXISTS review;
 DROP TABLE IF EXISTS user_favorite;
 DROP TABLE IF EXISTS capture;

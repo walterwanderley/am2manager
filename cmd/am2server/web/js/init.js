@@ -1,5 +1,6 @@
 loadComponents(document);
 
+
 htmx.onLoad(function (content) {
     loadComponents(content);
 });
@@ -12,6 +13,13 @@ function loadComponents(content) {
 
     var elemsSidenav = content.querySelectorAll('.sidenav');
     var instancesSidenav = M.Sidenav.init(elemsSidenav, options);
+
+    var elemsCollapsible = content.querySelectorAll('.collapsible');
+    var instancesCollapsible = M.Collapsible.init(elemsCollapsible, options);
+
+    $('.materialert .close-alert').click(function (){
+        $(this).parent().hide('slow');
+    });
 }
 
 function replacePathParams(event) {

@@ -1,0 +1,26 @@
+{{define "content"}}
+<div class="row">
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="container">
+            <br><br>
+            <h3 class="header center orange-text">{{.Name}}</h3>
+            <div class="row center">
+                <a href="/captures/{{.ID}}/file" class="waves-effect waves-light btn"><i class="material-icons right">download</i>Download</a>
+            </div>
+            <div class="row center">
+                <p>Downloads Count: {{.Downloads}}</p>
+                <p>Type: {{.Type}}</p>
+                {{if .HasCab}}<p>With Cabinet Simulator (IR)</p>{{end}}
+            </div>
+            <div class="row center">
+                <h5 class="header col s12 light">{{.Description}}</h5>
+            </div>
+            <div class="row center">
+                {{if .DemoLink}}<p>Demonstration: <a href="{{.DemoLink}}" target="_blank">{{.DemoLink}}</a></p>{{end}}
+                <p><a href="#" hx-get="/captures?offset=0&limit=10&arg={{.Am2Hash}}" hx-target="#main-section" hx-push-url="true">Search captures with same trained data</a></p>
+            </div>
+            <br><br>
+        </div>
+    </div>
+</div>
+{{end}}

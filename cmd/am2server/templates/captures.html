@@ -1,6 +1,12 @@
 {{define "content"}}
+<ul class="collapsible">
 {{range .}}
-<p><a href="/captures/{{.ID}}/file">{{.Name}}</a></p>
-<p>{{.Description}}</p>
+<li>
+    <div class="collapsible-header"><i class="material-icons">{{if eq .Type "CLEAN"}}volume_mute{{else if eq .Type "CRUNCH"}}volume_down{{else}}volume_up{{end}}</i><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a><span class="secondary-content">{{if .HasCab}}(IR){{end}}<span class="left">&nbsp;&nbsp;&nbsp;</span>Downloads: {{.Downloads}}</span></div>
+    <div class="collapsible-body"><span>{{.Description}}</span>
+    <p><a href="/captures/{{.ID}}/file" class="waves-effect waves-light btn"><i class="material-icons right">download</i>Download</a></p>
+    </div>
+</li>
 {{end}}
+</ul>
 {{end}}

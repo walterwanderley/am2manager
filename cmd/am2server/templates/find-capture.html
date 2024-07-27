@@ -9,14 +9,14 @@
     <div class="col s6">
         Most downloaded captures
         {{range .MostDownloaded}}
-        <p><a href="/captures/{{.ID}}/file">{{.Name}}</a></p>
+        <p><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a></p>
         {{end}}
     </div>
 
     <div class="col s6">
         Most recent captures
         {{range .MostRecent}}
-        <p><a href="/captures/{{.ID}}/file">{{.Name}}</a></p>
+        <p><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a></p>
         {{end}}
     </div>
 </div>

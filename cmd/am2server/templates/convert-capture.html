@@ -1,4 +1,11 @@
 {{define "content"}}
+{{if .Text}}
+<div class="materialert {{.Type}}">
+    <div class="material-icons">{{.Type.Icon}}</div>
+    <span>{{.Text}}</span>
+    <button type="button" class="close-alert">×</button>
+</div>
+{{end}}
 <div class="row">
     <div class="col s12 m4">
         <h5 class="center">Convert/Tune Captures</h5>
@@ -8,7 +15,7 @@
             <div class="file-field input-field col s6">
                 <div class="btn">
                     <span>am2 / am2Data file</span>
-                    <input type="file" name="data">
+                    <input type="file" name="data" required>
                 </div>
                 <div class="file-path-wrapper">
                     <input class="file-path validate" type="text">

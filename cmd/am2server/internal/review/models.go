@@ -20,8 +20,15 @@ type Capture struct {
 	DataHash    string
 	Data        []byte
 	Downloads   int64
+	DemoLink    sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   sql.NullTime
+}
+
+type ProtectedAm2 struct {
+	Am2Hash   string
+	Ref       string
+	CreatedAt time.Time
 }
 
 type Review struct {

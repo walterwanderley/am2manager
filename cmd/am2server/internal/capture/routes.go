@@ -5,7 +5,5 @@ package capture
 import "net/http"
 
 func (s *Service) RegisterHandlers(mux *http.ServeMux) {
-	mux.HandleFunc("GET /captures/{id}", s.handleGetCapture())
-	mux.HandleFunc("DELETE /captures/{id}", s.handleRemoveCapture())
 	mux.HandleFunc("GET /captures", s.handleSearchCaptures())
 }

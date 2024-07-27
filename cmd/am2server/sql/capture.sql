@@ -1,10 +1,6 @@
 /* name: addCapture :execresult */
-INSERT INTO capture(user_id, name, description, type, has_cab, data, am2_hash, data_hash)
-VALUES(?,?,?,?,?,?,?,?);
-
-/* name: RemoveCapture :execresult */
-/* http: DELETE /captures/{id} */
-DELETE FROM capture WHERE id = ?;
+INSERT INTO capture(user_id, name, description, type, has_cab, data, am2_hash, data_hash, demo_link)
+VALUES(?,?,?,?,?,?,?,?,?);
 
 /* name: GetCapture :one */
 /* http: GET /captures/{id} */
@@ -20,6 +16,7 @@ RETURNING data, name;
 SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.has_cab, c.type, c.created_at 
 FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
 WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
+OR c.data_hash = sqlc.arg('arg') OR c.am2_hash = sqlc.arg('arg')
 GROUP BY f.capture_id
 ORDER BY fav DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
@@ -35,3 +32,6 @@ SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at
 FROM capture c
 ORDER BY c.downloads DESC
 LIMIT 5;
+
+/* name: protectedTrainer :one */
+SELECT * FROM protected_am2 WHERE am2_hash = ? LIMIT 1;

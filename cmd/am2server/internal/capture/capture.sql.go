@@ -12,7 +12,7 @@ import (
 )
 
 const getCapture = `-- name: GetCapture :one
-SELECT id, user_id, name, description, type, has_cab, am2_hash, data_hash, data, downloads, created_at, updated_at FROM capture WHERE id = ?
+SELECT id, user_id, name, description, type, has_cab, am2_hash, data_hash, data, downloads, demo_link, created_at, updated_at FROM capture WHERE id = ?
 `
 
 // http: GET /captures/{id}
@@ -30,6 +30,7 @@ func (q *Queries) GetCapture(ctx context.Context, id int64) (Capture, error) {
 		&i.DataHash,
 		&i.Data,
 		&i.Downloads,
+		&i.DemoLink,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -54,19 +55,11 @@ func (q *Queries) GetCaptureFile(ctx context.Context, id int64) (GetCaptureFileR
 	return i, err
 }
 
-const removeCapture = `-- name: RemoveCapture :execresult
-DELETE FROM capture WHERE id = ?
-`
-
-// http: DELETE /captures/{id}
-func (q *Queries) RemoveCapture(ctx context.Context, id int64) (sql.Result, error) {
-	return q.db.ExecContext(ctx, removeCapture, id)
-}
-
 const searchCaptures = `-- name: SearchCaptures :many
 SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.has_cab, c.type, c.created_at 
 FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
 WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
+OR c.data_hash = ?1 OR c.am2_hash = ?1
 GROUP BY f.capture_id
 ORDER BY fav DESC
 LIMIT ?3 OFFSET ?2
@@ -123,8 +116,8 @@ func (q *Queries) SearchCaptures(ctx context.Context, arg SearchCapturesParams) 
 }
 
 const addCapture = `-- name: addCapture :execresult
-INSERT INTO capture(user_id, name, description, type, has_cab, data, am2_hash, data_hash)
-VALUES(?,?,?,?,?,?,?,?)
+INSERT INTO capture(user_id, name, description, type, has_cab, data, am2_hash, data_hash, demo_link)
+VALUES(?,?,?,?,?,?,?,?,?)
 `
 
 type addCaptureParams struct {
@@ -136,6 +129,7 @@ type addCaptureParams struct {
 	Data        []byte
 	Am2Hash     string
 	DataHash    string
+	DemoLink    sql.NullString
 }
 
 func (q *Queries) addCapture(ctx context.Context, arg addCaptureParams) (sql.Result, error) {
@@ -148,6 +142,7 @@ func (q *Queries) addCapture(ctx context.Context, arg addCaptureParams) (sql.Res
 		arg.Data,
 		arg.Am2Hash,
 		arg.DataHash,
+		arg.DemoLink,
 	)
 }
 
@@ -245,4 +240,15 @@ func (q *Queries) mostRecentCaptures(ctx context.Context) ([]mostRecentCapturesR
 		return nil, err
 	}
 	return items, nil
+}
+
+const protectedTrainer = `-- name: protectedTrainer :one
+SELECT am2_hash, ref, created_at FROM protected_am2 WHERE am2_hash = ? LIMIT 1
+`
+
+func (q *Queries) protectedTrainer(ctx context.Context, am2Hash string) (ProtectedAm2, error) {
+	row := q.db.QueryRowContext(ctx, protectedTrainer, am2Hash)
+	var i ProtectedAm2
+	err := row.Scan(&i.Am2Hash, &i.Ref, &i.CreatedAt)
+	return i, err
 }
