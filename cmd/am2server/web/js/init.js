@@ -10,7 +10,7 @@ function loadComponents(content) {
     var instances = M.FormSelect.init(elems, options);
 
 
-    var elemsSidenav = document.querySelectorAll('.sidenav');
+    var elemsSidenav = content.querySelectorAll('.sidenav');
     var instancesSidenav = M.Sidenav.init(elemsSidenav, options);
 }
 

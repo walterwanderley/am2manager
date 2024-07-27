@@ -1,27 +1,40 @@
-<nav class="light-blue lighten-1" role="navigation">
+<nav class="cyan text-lighten-3" role="navigation">
   <div class="nav-wrapper">
     <a id="logo-container" hx-get="/" hx-push-url="true" hx-target="#main-section" class="brand-logo">Am2Data / Am2</a>
     <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
     <ul class="right hide-on-med-and-down">
-      <li><a hx-get="/" hx-push-url="true" hx-target="#main-section"><i
-        class="material-icons left">home</i>Home</a></li>
+      <li></li>
+      <li><a hx-get="/" hx-push-url="true" hx-target="#main-section"><i class="material-icons left">home</i>Home</a>
+      </li>
       <li><a hx-get="/convert-capture" hx-push-url="true" hx-target="#main-section"><i
             class="material-icons left">tune</i>Convert/Tune Captures</a></li>
       <li><a hx-get="/new-capture" hx-push-url="true" hx-target="#main-section"><i
             class="material-icons left">upload</i>Upload Captures</a></li>
-      <li><a hx-get="/search-capture" hx-push-url="true" hx-target="#main-section"><i
+      <li><a hx-get="/find-capture" hx-push-url="true" hx-target="#main-section"><i
             class="material-icons left">search</i>Search Captures</a></li>
     </ul>
   </div>
 </nav>
+<nav class="cyan lighten-1">
+  <div class="nav-wrapper">
+    <form hx-get="/captures" hx-target="#main-section">
+      <input type="hidden" name="offset" value="0">
+      <input type="hidden" name="limit" value="10">
+      <div class="input-field">
+        <input id="search" name="arg" type="search" required>
+        <label class="label-icon" for="search"><i class="material-icons">search</i></label>
+        <i class="material-icons">close</i>
+      </div>
+    </form>
+  </div>
+</nav>
 
 <ul class="sidenav" id="mobile-demo">
-  <li><a hx-get="/" hx-push-url="true" hx-target="#main-section"><i
-    class="material-icons left">home</i>Home</a></li>
+  <li><a hx-get="/" hx-push-url="true" hx-target="#main-section"><i class="material-icons left">home</i>Home</a></li>
   <li><a hx-get="/convert-capture" hx-push-url="true" hx-target="#main-section"><i
         class="material-icons left">tune</i>Convert/Tune Captures</a></li>
   <li><a hx-get="/new-capture" hx-push-url="true" hx-target="#main-section"><i
         class="material-icons left">upload</i>Upload Captures</a></li>
-  <li><a hx-get="/search-capture" hx-push-url="true" hx-target="#main-section"><i
+  <li><a hx-get="/find-capture" hx-push-url="true" hx-target="#main-section"><i
         class="material-icons left">search</i>Search Captures</a></li>
 </ul>

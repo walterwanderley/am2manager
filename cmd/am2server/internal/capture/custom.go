@@ -19,9 +19,37 @@ type CustomService struct {
 
 func (s *CustomService) RegisterHandlers(mux *http.ServeMux) {
 	s.Service.RegisterHandlers(mux)
+	mux.HandleFunc("GET /find-capture", s.handleFindCapture())
 	mux.HandleFunc("POST /captures-convert", s.handleConvertCapture())
 	mux.HandleFunc("POST /captures-upload", s.handleAddCapture())
 	mux.HandleFunc("GET /captures/{id}/file", s.handleGetCaptureFile())
+}
+
+func (s *CustomService) handleFindCapture() http.HandlerFunc {
+	type response struct {
+		MostDownloaded []mostDownloadedCapturesRow
+		MostRecent     []mostRecentCapturesRow
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		mostDownloaded, err := s.querier.mostDownloadedCaptures(r.Context())
+		if err != nil {
+			slog.Error("most downloaded query", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		mostRecent, err := s.querier.mostRecentCaptures(r.Context())
+		if err != nil {
+			slog.Error("most recent query", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		server.Encode(w, r, http.StatusOK, response{
+			MostDownloaded: mostDownloaded,
+			MostRecent:     mostRecent,
+		})
+	}
 }
 
 func (s *CustomService) handleConvertCapture() http.HandlerFunc {

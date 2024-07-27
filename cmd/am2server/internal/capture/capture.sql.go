@@ -68,7 +68,7 @@ SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.h
 FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
 WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
 GROUP BY f.capture_id
-ORDER BY c.downloads, c.created_at DESC
+ORDER BY fav DESC
 LIMIT ?3 OFFSET ?2
 `
 
@@ -149,4 +149,100 @@ func (q *Queries) addCapture(ctx context.Context, arg addCaptureParams) (sql.Res
 		arg.Am2Hash,
 		arg.DataHash,
 	)
+}
+
+const mostDownloadedCaptures = `-- name: mostDownloadedCaptures :many
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+FROM capture c
+ORDER BY c.downloads DESC
+LIMIT 5
+`
+
+type mostDownloadedCapturesRow struct {
+	ID          int64
+	Name        string
+	Description sql.NullString
+	Downloads   int64
+	HasCab      sql.NullBool
+	Type        string
+	CreatedAt   time.Time
+}
+
+func (q *Queries) mostDownloadedCaptures(ctx context.Context) ([]mostDownloadedCapturesRow, error) {
+	rows, err := q.db.QueryContext(ctx, mostDownloadedCaptures)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []mostDownloadedCapturesRow
+	for rows.Next() {
+		var i mostDownloadedCapturesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Downloads,
+			&i.HasCab,
+			&i.Type,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const mostRecentCaptures = `-- name: mostRecentCaptures :many
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+FROM capture c
+ORDER BY c.created_at DESC
+LIMIT 5
+`
+
+type mostRecentCapturesRow struct {
+	ID          int64
+	Name        string
+	Description sql.NullString
+	Downloads   int64
+	HasCab      sql.NullBool
+	Type        string
+	CreatedAt   time.Time
+}
+
+func (q *Queries) mostRecentCaptures(ctx context.Context) ([]mostRecentCapturesRow, error) {
+	rows, err := q.db.QueryContext(ctx, mostRecentCaptures)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []mostRecentCapturesRow
+	for rows.Next() {
+		var i mostRecentCapturesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Downloads,
+			&i.HasCab,
+			&i.Type,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -21,5 +21,17 @@ SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.h
 FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
 WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
 GROUP BY f.capture_id
-ORDER BY c.downloads, c.created_at DESC
+ORDER BY fav DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+
+/* name: mostRecentCaptures :many */
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+FROM capture c
+ORDER BY c.created_at DESC
+LIMIT 5;
+
+/* name: mostDownloadedCaptures :many */
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+FROM capture c
+ORDER BY c.downloads DESC
+LIMIT 5;
