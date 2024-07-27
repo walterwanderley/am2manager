@@ -1,7 +1,6 @@
 loadComponents(document);
 
 htmx.onLoad(function (content) {
-    console.log('htmx-Load', content);
     loadComponents(content);
 });
 

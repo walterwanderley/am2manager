@@ -1,0 +1,99 @@
+{{define "content"}}
+<div class="row">
+    <div class="col s12 m4">
+        <h5 class="center">Convert/Tune Captures</h5>
+    </div>
+    <form class="col s12" action="/captures-convert" method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="file-field input-field col s6">
+                <div class="btn">
+                    <span>am2 / am2Data file</span>
+                    <input type="file" name="data">
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text">
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <p class="range-field col s6">
+                <input type="range" id="level" name="level" min="0" max="255" value="100" />
+                <label for="level">Level: </label><span id="level_value"></span>
+                <script>
+                    var levelValue = document.querySelector("#level_value");
+                    var levelInput = document.querySelector("#level");
+                    levelValue.textContent = levelInput.value;
+                    levelInput.addEventListener("input", (event) => {
+                        levelValue.textContent = event.target.value;
+                    });
+                </script>
+            </p>
+        </div>
+
+        <div class="row">
+            <p class="range-field col s6">
+                <input type="range" id="mix" name="mix" min="0" max="100" value="100" />
+                <label for="mix">Mix: </label><span id="mix_value"></span>
+                <script>
+                    var mixValue = document.querySelector("#mix_value");
+                    var mixInput = document.querySelector("#mix");
+                    mixValue.textContent = mixInput.value;
+                    mixInput.addEventListener("input", (event) => {
+                        mixValue.textContent = event.target.value;
+                    });
+                </script>
+            </p>
+        </div>
+
+        <div class="row">
+            <div id="gain-slider" class="range-field col s6"></div>
+            <br>
+            <input type="hidden" name="gain_min" id="gain_min">
+            <input type="hidden" name="gain_max" id="gain_max">
+            <label>Gain Min: </label><span id="gain_min_value"></span>
+            <label>Max: </label><span id="gain_max_value"></span>
+            <script>
+                setTimeout(function () {
+                    var slider = document.getElementById('gain-slider');
+                    noUiSlider.create(slider, {
+                        start: [30, 60],
+                        connect: true,
+                        step: 1,
+                        orientation: 'horizontal',
+                        range: {
+                            'min': 0,
+                            'max': 100
+                        },
+                        format: {
+                            to: function (value) {
+                                return value;
+                            },
+                            from: function (value) {
+                                return Number(value);
+                            }
+                        }
+                    });
+                    var gainMin = document.getElementById('gain_min');
+                    var gainMax = document.getElementById('gain_max');
+                    var gainMinOut = document.getElementById('gain_min_value');
+                    var gainMaxOut = document.getElementById('gain_max_value');
+                    slider.noUiSlider.on('update', function (values, handle) {
+                        gainMinOut.textContent = values[0];
+                        gainMin.value = values[0];
+                        gainMaxOut.textContent = values[1];
+                        gainMax.value = values[1];
+                    });
+                }, 100);
+            </script>
+        </div>
+
+        <div class="row">
+            <button class="btn waves-effect waves-light" type="submit" name="action">Download
+                <i class="material-icons left">download</i>
+            </button>
+        </div>
+
+    </form>
+</div>
+{{end}}

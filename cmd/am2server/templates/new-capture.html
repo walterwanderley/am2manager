@@ -1,11 +1,14 @@
 {{define "content"}}
 <div class="row">
+    <div class="col s12 m4">
+        <h5 class="center">Share your Captures</h5>
+    </div>
     <form class="col s12" hx-post="/captures-upload" enctype="multipart/form-data">
         <div class="row">
             <div class="file-field input-field col s6">
                 <div class="btn">
-                    <span>File</span>
-                    <input type="file" name="file" accept=".am2data, .am2">
+                    <span>am2 / am2Data file</span>
+                    <input type="file" name="data" accept=".am2data, .am2">
                 </div>
                 <div class="file-path-wrapper">
                     <input class="file-path validate" type="text">

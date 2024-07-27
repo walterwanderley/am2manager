@@ -19,8 +19,92 @@ type CustomService struct {
 
 func (s *CustomService) RegisterHandlers(mux *http.ServeMux) {
 	s.Service.RegisterHandlers(mux)
+	mux.HandleFunc("POST /captures-convert", s.handleConvertCapture())
 	mux.HandleFunc("POST /captures-upload", s.handleAddCapture())
 	mux.HandleFunc("GET /captures/{id}/file", s.handleGetCaptureFile())
+}
+
+func (s *CustomService) handleConvertCapture() http.HandlerFunc {
+	type request struct {
+		Level   int    `form:"level" json:"level"`
+		Mix     int    `form:"mix" json:"mix"`
+		GainMin int    `form:"gain_min" json:"gain_min"`
+		GainMax int    `form:"gain_max" json:"gain_max"`
+		Data    []byte `form:"file" json:"file"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		req, err := server.Decode[request](r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
+		}
+
+		if req.Level < 0 || req.Level > 255 {
+			http.Error(w, "level must be a value between 0 and 255", http.StatusBadRequest)
+			return
+		}
+
+		if req.Mix < 0 || req.Mix > 100 {
+			http.Error(w, "mix must be a value between 0 and 100", http.StatusBadRequest)
+			return
+		}
+
+		if req.GainMin < 0 || req.GainMin > 100 {
+			http.Error(w, "gain-min must be a value between 0 and 100", http.StatusBadRequest)
+			return
+		}
+
+		if req.GainMax < 0 || req.GainMax > 100 {
+			http.Error(w, "gain-max must be a value between 0 and 100", http.StatusBadRequest)
+			return
+		}
+
+		if req.GainMin > req.GainMax {
+			http.Error(w, "gain-min can't be greater than gain-max", http.StatusBadRequest)
+			return
+		}
+
+		file, handler, err := r.FormFile("data")
+		if err != nil {
+			slog.Error("upload file", "error", err)
+			http.Error(w, "upload file error", http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		data, err := io.ReadAll(file)
+		if err != nil {
+			slog.Error("read file", "error", err)
+			http.Error(w, "read file error", http.StatusInternalServerError)
+			return
+		}
+
+		var am2data am2manager.Am2Data
+		if err := am2data.UnmarshalBinary(data); err != nil {
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
+		}
+
+		am2data.Level = byte(req.Level)
+		am2data.Mix = byte(req.Mix)
+		am2data.GainMin = byte(req.GainMin)
+		am2data.GainMax = byte(req.GainMax)
+
+		result, err := am2data.MarshalBinary()
+		if err != nil {
+			slog.Error("marshal file", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+
+		}
+
+		filename := toAm2DataExtension(handler.Filename)
+
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+		w.Header().Set("Content-Length", fmt.Sprint(len(result)))
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Write(result)
+	}
 }
 
 func (s *CustomService) handleAddCapture() http.HandlerFunc {
@@ -128,14 +212,19 @@ func (s *CustomService) handleGetCaptureFile() http.HandlerFunc {
 			return
 		}
 
-		filename := strings.TrimSuffix(result.Name, ".am2data")
-		filename = strings.TrimSuffix(strings.TrimSuffix(filename, ".am2Data"), ".am2")
-
-		filename += ".am2data"
+		filename := toAm2DataExtension(result.Name)
 
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 		w.Header().Set("Content-Length", fmt.Sprint(len(result.Data)))
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Write(result.Data)
 	}
+}
+
+func toAm2DataExtension(filename string) string {
+	i := strings.LastIndex(filename, ".")
+	if i < 0 {
+		return filename
+	}
+	return filename[0:i] + ".am2data"
 }
