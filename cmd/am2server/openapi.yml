@@ -609,9 +609,6 @@ components:
         downloads:
           type: integer
           format: int64
-        fav:
-          type: integer
-          format: int64
         has_cab:
           type: boolean
         type:

@@ -56,12 +56,11 @@ func (q *Queries) GetCaptureFile(ctx context.Context, id int64) (GetCaptureFileR
 }
 
 const searchCaptures = `-- name: SearchCaptures :many
-SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.has_cab, c.type, c.created_at 
-FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+FROM capture c
 WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
 OR c.data_hash = ?1 OR c.am2_hash = ?1
-GROUP BY f.capture_id
-ORDER BY fav DESC
+ORDER BY c.downloads DESC
 LIMIT ?3 OFFSET ?2
 `
 
@@ -76,7 +75,6 @@ type SearchCapturesRow struct {
 	Name        string
 	Description sql.NullString
 	Downloads   int64
-	Fav         int64
 	HasCab      sql.NullBool
 	Type        string
 	CreatedAt   time.Time
@@ -97,7 +95,6 @@ func (q *Queries) SearchCaptures(ctx context.Context, arg SearchCapturesParams) 
 			&i.Name,
 			&i.Description,
 			&i.Downloads,
-			&i.Fav,
 			&i.HasCab,
 			&i.Type,
 			&i.CreatedAt,

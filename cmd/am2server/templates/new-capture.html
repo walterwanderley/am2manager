@@ -3,7 +3,7 @@
     <div class="col s12 m4">
         <h5 class="center">Share your Captures</h5>
     </div>
-    <form class="col s12" hx-post="/captures-upload" enctype="multipart/form-data">
+    <form class="col s12" hx-post="/captures-upload" hx-target="#messages" enctype="multipart/form-data">
         <div class="row">
             <div class="file-field input-field col s6">
                 <div class="btn">

@@ -15,15 +15,18 @@
     </li>
     {{end}}
 </ul>
-{{if Pagination}}
+{{if and Pagination (gt Pagination.TotalPages 1)}}
 <ul class="pagination">
-    <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
-    <li class="active"><a href="#!">1</a></li>
-    <li class="waves-effect"><a href="#!">2</a></li>
-    <li class="waves-effect"><a href="#!">3</a></li>
-    <li class="waves-effect"><a href="#!">4</a></li>
-    <li class="waves-effect"><a href="#!">5</a></li>
-    <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+    <li class="{{if gt Pagination.CurrentPage 1}}waves-effect{{else}}disabled{{end}}"><a href="#"
+        {{if gt Pagination.CurrentPage 1}}hx-get="{{Pagination.URL Pagination.Limit Pagination.Prev}}" hx-target="#main-section" hx-push-url="true"{{end}}>
+            <i class="material-icons">chevron_left</i></a></li>
+    {{range Pagination.PageNumbers}}
+    <li class="{{if eq . Pagination.CurrentPage}}active{{else}}waves-effect{{end}}"><a href="#" hx-get="{{Pagination.URLPage .}}"
+        hx-target="#main-section" hx-push-url="true">{{.}}</a></li>
+    {{end}}
+    <li class="{{if lt Pagination.CurrentPage Pagination.TotalPages}}waves-effect{{else}}disabled{{end}}">
+        <a href="#" {{if lt Pagination.CurrentPage Pagination.TotalPages}} hx-get="{{Pagination.URL Pagination.Limit Pagination.Next}}"
+            hx-target="#main-section" hx-push-url="true"{{end}}><i class="material-icons">chevron_right</i></a></li>
 </ul>
 {{end}}
 {{end}}

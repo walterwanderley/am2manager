@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -80,7 +81,11 @@ func (m Message) Render(w http.ResponseWriter, r *http.Request) error {
 		w.Header().Set("HX-Reswap", "beforeend")
 	}
 
-	return messageTemplate.Execute(w, m)
+	err := messageTemplate.Execute(w, m)
+	if err != nil {
+		slog.Error("render message", "err", err)
+	}
+	return err
 }
 
 func Info(w http.ResponseWriter, r *http.Request, code int, text string) error {

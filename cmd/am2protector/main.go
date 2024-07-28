@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/walterwanderley/am2manager"
 )
@@ -18,7 +20,7 @@ func main() {
 		panic("-ref can't be empty")
 	}
 	fsys := os.DirFS(".")
-	hashes := make(map[string]struct{})
+	hashes := make(map[string][]string)
 	err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, _ error) error {
 		if d.IsDir() {
 			return nil
@@ -36,7 +38,13 @@ func main() {
 		if err != nil {
 			return err
 		}
-		hashes[am2.HashAm2()] = struct{}{}
+
+		am2hash := am2.HashAm2()
+		if _, ok := hashes[am2hash]; !ok {
+			hashes[am2hash] = make([]string, 0)
+		}
+		filename := filepath.Base(p)
+		hashes[am2hash] = append(hashes[am2hash], filename)
 
 		return nil
 	})
@@ -48,7 +56,7 @@ func main() {
 		return
 	}
 
-	for hash, _ := range hashes {
-		fmt.Printf("INSERT INTO protected_am2 (am2_hash, ref) VALUES ('%s', '%s');\n", hash, ref)
+	for hash, files := range hashes {
+		fmt.Printf("INSERT OR IGNORE INTO protected_am2(am2_hash, ref) VALUES ('%s', '%s'); -- %s\n", hash, ref, strings.Join(files, ", "))
 	}
 }

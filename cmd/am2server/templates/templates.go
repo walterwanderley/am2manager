@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io/fs"
 	"log/slog"
+	"math"
 	"net/http"
 	"os"
 	"strings"
@@ -46,12 +47,27 @@ type Pagination struct {
 	Total   int64
 }
 
-func (p *Pagination) From() int64 {
-	return p.Offset + 1
+func (p *Pagination) TotalPages() int64 {
+	if p.Total == 0 || p.Limit == 0 {
+		return 0
+	}
+	total := float64(p.Total)
+	limit := float64(p.Limit)
+	return int64(math.Ceil(total / limit))
 }
 
-func (p *Pagination) To() int64 {
-	return p.Offset + p.Limit
+func (p *Pagination) PageNumbers() []int64 {
+	total := p.TotalPages()
+	pages := make([]int64, total)
+	var i int64
+	for i = 0; i < total; i++ {
+		pages[i] = i + 1
+	}
+	return pages
+}
+
+func (p *Pagination) CurrentPage() int64 {
+	return (p.Offset / p.Limit) + 1
 }
 
 func (p *Pagination) Next() int64 {
@@ -72,6 +88,16 @@ func (p *Pagination) Prev() int64 {
 		offset = 0
 	}
 	return offset
+}
+
+func (p *Pagination) URLPage(page int64) string {
+	if p == nil {
+		return ""
+	}
+	if page == 1 {
+		return p.URL(p.Limit, 0)
+	}
+	return p.URL(p.Limit, page*p.Limit-p.Limit)
 }
 
 func (p *Pagination) URL(limit, offset int64) string {

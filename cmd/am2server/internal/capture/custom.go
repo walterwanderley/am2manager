@@ -351,7 +351,6 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 		Name        string    `json:"name,omitempty"`
 		Description *string   `json:"description,omitempty"`
 		Downloads   int64     `json:"downloads,omitempty"`
-		Fav         int64     `json:"fav,omitempty"`
 		HasCab      *bool     `json:"has_cab,omitempty"`
 		Type        string    `json:"type,omitempty"`
 		CreatedAt   time.Time `json:"created_at,omitempty"`
@@ -391,7 +390,7 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
+		slog.Info("RESULT", "len", len(result))
 		total, _ := s.querier.totalSearchCaptures(r.Context(), arg.Arg)
 
 		r = r.WithContext(templates.ContextWithPagination(r.Context(), &templates.Pagination{
@@ -408,7 +407,6 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 				item.Description = &r.Description.String
 			}
 			item.Downloads = r.Downloads
-			item.Fav = r.Fav
 			if r.HasCab.Valid {
 				item.HasCab = &r.HasCab.Bool
 			}
@@ -423,7 +421,7 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 func toAm2DataExtension(filename string) string {
 	i := strings.LastIndex(filename, ".")
 	if i < 0 {
-		return filename
+		return filename + ".am2data"
 	}
 	return filename[0:i] + ".am2data"
 }

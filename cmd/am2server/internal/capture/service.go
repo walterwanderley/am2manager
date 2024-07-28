@@ -27,7 +27,6 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 		Name        string    `json:"name,omitempty"`
 		Description *string   `json:"description,omitempty"`
 		Downloads   int64     `json:"downloads,omitempty"`
-		Fav         int64     `json:"fav,omitempty"`
 		HasCab      *bool     `json:"has_cab,omitempty"`
 		Type        string    `json:"type,omitempty"`
 		CreatedAt   time.Time `json:"created_at,omitempty"`
@@ -76,7 +75,6 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 				item.Description = &r.Description.String
 			}
 			item.Downloads = r.Downloads
-			item.Fav = r.Fav
 			if r.HasCab.Valid {
 				item.HasCab = &r.HasCab.Bool
 			}

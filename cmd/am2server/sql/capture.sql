@@ -13,12 +13,11 @@ RETURNING data, name;
 
 /* name: SearchCaptures :many */
 /* http: GET /captures */
-SELECT c.id, c.name, c.description, c.downloads, count(f.capture_id) AS fav, c.has_cab, c.type, c.created_at 
-FROM capture c LEFT OUTER JOIN user_favorite f ON c.id = f.capture_id
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+FROM capture c
 WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
 OR c.data_hash = sqlc.arg('arg') OR c.am2_hash = sqlc.arg('arg')
-GROUP BY f.capture_id
-ORDER BY fav DESC
+ORDER BY c.downloads DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 /* name: totalSearchCaptures :one */
