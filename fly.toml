@@ -1,0 +1,42 @@
+# fly.toml app configuration file generated for am2manager on 2024-07-27T19:21:40-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'am2manager'
+primary_region = 'gru'
+
+[build]
+
+[env]
+  PORT = '8080'
+  AWS_ACCESS_KEY_ID = 'tid_vfQUpnnBvMZAwCjSUU_HvIpyvCTJXO_DkysPFWzamRLSmMWjCb'
+  AWS_ENDPOINT_URL_S3 = 'https://fly.storage.tigris.dev'
+  AWS_REGION = 'auto'  
+  BUCKET_NAME = 'weathered-sun-91'
+  LITESTREAM_URL = 's3:/am2manager'
+  LITESTREAM_FORCE_PATH_STYLE = 'true'
+  DSN = 'as2manager.db'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[checks]
+  [checks.name_of_your_http_check]
+    grace_period = "30s"
+    interval = "15s"
+    method = "get"
+    path = "/liveness"
+    port = 8080
+    timeout = "10s"
+    type = "http"

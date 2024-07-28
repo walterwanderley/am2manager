@@ -252,3 +252,17 @@ func (q *Queries) protectedTrainer(ctx context.Context, am2Hash string) (Protect
 	err := row.Scan(&i.Am2Hash, &i.Ref, &i.CreatedAt)
 	return i, err
 }
+
+const totalSearchCaptures = `-- name: totalSearchCaptures :one
+SELECT count(*)
+FROM capture c
+WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
+OR c.data_hash = ?1 OR c.am2_hash = ?1
+`
+
+func (q *Queries) totalSearchCaptures(ctx context.Context, arg sql.NullString) (int64, error) {
+	row := q.db.QueryRowContext(ctx, totalSearchCaptures, arg)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}

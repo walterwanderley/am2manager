@@ -391,6 +391,14 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		total, _ := s.querier.totalSearchCaptures(r.Context(), arg.Arg)
+
+		r = r.WithContext(templates.ContextWithPagination(r.Context(), &templates.Pagination{
+			Limit:  req.Limit,
+			Offset: req.Offset,
+			Total:  total,
+		}))
 		res := make([]response, 0)
 		for _, r := range result {
 			var item response

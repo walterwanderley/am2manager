@@ -21,6 +21,12 @@ GROUP BY f.capture_id
 ORDER BY fav DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
+/* name: totalSearchCaptures :one */
+SELECT count(*)
+FROM capture c
+WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
+OR c.data_hash = sqlc.arg('arg') OR c.am2_hash = sqlc.arg('arg');
+
 /* name: mostRecentCaptures :many */
 SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
 FROM capture c
