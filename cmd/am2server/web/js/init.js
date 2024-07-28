@@ -14,7 +14,7 @@ function loadComponents(content) {
     var elemsSidenav = content.querySelectorAll('.sidenav');
     var instancesSidenav = M.Sidenav.init(elemsSidenav, options);
 
-    var elemsCollapsible = content.querySelectorAll('.collapsible');
+    var elemsCollapsible = document.querySelectorAll('.collapsible');
     var instancesCollapsible = M.Collapsible.init(elemsCollapsible, options);
 
     $('.materialert .close-alert').click(function () {
