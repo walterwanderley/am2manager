@@ -13,10 +13,11 @@
     <link href="/web/css/style.css" type="text/css" rel="stylesheet" />
 </head>
 
-<body>
+<body hx-indicator="#indicator">
     {{ template "header.html" .}}
 
     <div class="container">
+        <img id="indicator" class="htmx-indicator" src="/web/img/audio.svg" />
         <div id="messages"></div>
         <div class="section" id="main-section">            
             {{ template "content" .Content}}

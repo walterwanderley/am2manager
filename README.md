@@ -24,7 +24,7 @@ am2converter -level=120 -gain-min=0 -gain-max=100 file.am2 > file.am2Data
 
 ## am2protect
 
-Create a sql file to sendo to am2server and protect your own captures.
+Create a sql file, send to am2server to protect your own captures agains uploads from unauthorized users.
 
 ### Installation
 
