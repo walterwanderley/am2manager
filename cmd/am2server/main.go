@@ -19,21 +19,22 @@ import (
 	"time"
 
 	"github.com/flowchartsman/swaggerui"
+	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/etag"
+	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/litestream"
+	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
 	"go.uber.org/automaxprocs/maxprocs"
 
 	// database driver
-	_ "modernc.org/sqlite"
-
-	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/etag"
-	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -go.mod ../../go.mod -i ^[a-z],GetCapture -append
+//go:generate sqlc-http -m github.com/walterwanderley/am2manager/cmd/am2server -migration-path sql/migrations -go.mod ../../go.mod -i ^[a-z],GetCapture -litestream -append
 
 var (
-	dbURL string
-	dev   bool
-	port  int
+	dbURL          string
+	dev            bool
+	port           int
+	replicationURL string
 
 	//go:embed openapi.yml
 	openAPISpec []byte
@@ -43,9 +44,11 @@ var (
 
 func main() {
 	flag.StringVar(&dbURL, "db", "", "The Database connection URL")
-	flag.IntVar(&port, "port", 5000, "The server port")
+	flag.IntVar(&port, "port", 8080, "The server port")
 
 	flag.BoolVar(&dev, "dev", false, "Set logger to development mode")
+
+	flag.StringVar(&replicationURL, "replication", "", "S3 replication URL")
 
 	flag.Parse()
 
@@ -64,18 +67,34 @@ func run() error {
 	}
 	slog.Info("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
 
+	if dbURL == "" {
+		dbURL = os.Getenv("DSN")
+	}
+
 	dbURL = os.ExpandEnv(dbURL)
 
 	if !strings.Contains(dbURL, "?") {
-		dbURL = dbURL + "?_pragma=busy_timeout(5000)&_pragma=sync(NORMAL)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_txlock=immediate"
+		dbURL = dbURL + "?_timeout=5000&_journal=WAL&_sync=NORMAL&_fk=true&_txlock=immediate"
 	}
 
-	db, err := sql.Open("sqlite", dbURL)
+	if replicationURL == "" {
+		replicationURL = os.Getenv("LITESTREAM_URL")
+	}
+
+	db, err := sql.Open("sqlite3", dbURL)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
+	if replicationURL != "" {
+		slog.Info("replication", "url", replicationURL)
+		lsdb, err := litestream.Replicate(context.Background(), dbURL, replicationURL)
+		if err != nil {
+			return fmt.Errorf("init replication error: %w", err)
+		}
+		defer lsdb.Close()
+	}
 	if err := ensureSchema(db); err != nil {
 		return fmt.Errorf("migration error: %w", err)
 	}
@@ -89,6 +108,10 @@ func run() error {
 		mux.Handle("GET /web/", etag.Handler(webFS, ""))
 	}
 	templates.RegisterHandlers(mux, dev)
+
+	mux.HandleFunc("GET /liveness", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
