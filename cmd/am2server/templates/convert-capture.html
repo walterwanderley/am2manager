@@ -15,7 +15,7 @@
             <div class="file-field input-field col s6">
                 <div class="btn">
                     <span>am2 / am2Data file</span>
-                    <input type="file" name="data" required>
+                    <input type="file" id="input_file" name="data" required>
                 </div>
                 <div class="file-path-wrapper">
                     <input class="file-path validate" type="text">
@@ -103,4 +103,55 @@
 
     </form>
 </div>
+<script>
+
+    const getMethods = (obj) => {
+        let properties = new Set()
+        let currentObj = obj
+        do {
+            Object.getOwnPropertyNames(currentObj).map(item => properties.add(item))
+        } while ((currentObj = Object.getPrototypeOf(currentObj)))
+        return [...properties.keys()].filter(item => typeof obj[item] === 'function')
+    }
+
+    document.getElementById('input_file').addEventListener('change', function selectedFileChanged() {
+
+        if (this.files.length === 0) {
+            return;
+        }
+
+        var file = this.files[0]
+
+        const reader = new FileReader();
+        reader.onload = function fileReadCompleted() {
+            if (reader.result.byteLength !== 6204) {
+                // not am2data file, set default initial values
+                document.querySelector("#mix").value = 100;
+                document.querySelector("#mix_value").textContent = 100;
+
+                document.querySelector("#level").value = 100;
+                document.querySelector("#level_value").textContent = 100;
+
+                document.querySelector('#gain-slider').noUiSlider.set([30, 60]);
+                return
+            }
+
+            var view = new Uint8Array(reader.result.slice(0, 60));
+            var mix = view[18];
+            document.querySelector("#mix").value = mix;
+            document.querySelector("#mix_value").textContent = mix;
+
+            var level = view[19];
+            document.querySelector("#level").value = level;
+            document.querySelector("#level_value").textContent = level;
+
+            var gainMax = view[20];
+            var gainMin = view[21];
+            document.querySelector('#gain-slider').noUiSlider.set([gainMin, gainMax]);
+            
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+</script>
 {{end}}

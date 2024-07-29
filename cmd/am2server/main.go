@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/flowchartsman/swaggerui"
+	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server"
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/etag"
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/litestream"
 	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
@@ -114,9 +115,12 @@ func run() error {
 	})
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
-		// Please, configure timeouts!
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           server.LoggingMiddleware(mux),
+		WriteTimeout:      15 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       30 * time.Second,
 	}
 
 	done := make(chan os.Signal, 1)

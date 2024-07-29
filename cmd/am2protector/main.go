@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/walterwanderley/am2manager"
@@ -44,7 +45,9 @@ func main() {
 			hashes[am2hash] = make([]string, 0)
 		}
 		filename := filepath.Base(p)
-		hashes[am2hash] = append(hashes[am2hash], filename)
+		if !slices.Contains(hashes[am2hash], filename) {
+			hashes[am2hash] = append(hashes[am2hash], filename)
+		}
 
 		return nil
 	})

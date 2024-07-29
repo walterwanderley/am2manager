@@ -390,7 +390,6 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		slog.Info("RESULT", "len", len(result))
 		total, _ := s.querier.totalSearchCaptures(r.Context(), arg.Arg)
 
 		r = r.WithContext(templates.ContextWithPagination(r.Context(), &templates.Pagination{

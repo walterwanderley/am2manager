@@ -37,6 +37,6 @@ go install github.com/walterwanderley/am2manager/cmd/am2protect@latest
 Go to the directory whrere you put yours am2 and am2data:
 
 ```sh
-am2protect -ref "your e-mail or qwebsite" > protect.sql
+am2protect -ref "your e-mail or website" > protect.sql
 ```
 
