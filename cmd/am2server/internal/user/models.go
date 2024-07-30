@@ -43,9 +43,8 @@ type Review struct {
 
 type User struct {
 	ID        int64
-	Login     string
 	Email     string
-	Pass      string
+	Name      string
 	Status    string
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime

@@ -8,7 +8,5 @@ func (s *Service) RegisterHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("POST /users", s.handleAddUser())
 	mux.HandleFunc("GET /users/count", s.handleContUsers())
 	mux.HandleFunc("GET /users/{id}", s.handleGetUser())
-	mux.HandleFunc("DELETE /users/{id}", s.handleRemoveUser())
-	mux.HandleFunc("PATCH /users/{id}/pass", s.handleSetUserPassword())
-	mux.HandleFunc("GET /users/{id}/token/{pass}", s.handleValidateUserEmail())
+	mux.HandleFunc("GET /users", s.handleGetUserByEmail())
 }

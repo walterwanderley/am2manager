@@ -342,9 +342,9 @@ func (s *CustomService) handleGetCaptureFile() http.HandlerFunc {
 
 func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 	type request struct {
-		Arg    *string `form:"arg" json:"arg"`
-		Offset int64   `form:"offset" json:"offset"`
-		Limit  int64   `form:"limit" json:"limit"`
+		Arg    string `form:"arg" json:"arg"`
+		Offset int64  `form:"offset" json:"offset"`
+		Limit  int64  `form:"limit" json:"limit"`
 	}
 	type response struct {
 		ID          int64     `json:"id,omitempty"`
@@ -359,7 +359,7 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req request
 		if str := r.URL.Query().Get("arg"); str != "" {
-			req.Arg = &str
+			req.Arg = str
 		}
 		if str := r.URL.Query().Get("offset"); str != "" {
 			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
@@ -378,11 +378,13 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			}
 		}
 		var arg SearchCapturesParams
-		if req.Arg != nil {
-			arg.Arg = sql.NullString{Valid: true, String: *req.Arg}
-		}
+		arg.Arg = sql.NullString{Valid: true, String: req.Arg}
 		arg.Offset = req.Offset
 		arg.Limit = req.Limit
+
+		if arg.Limit == 0 {
+			arg.Limit = 10
+		}
 
 		result, err := s.querier.SearchCaptures(r.Context(), arg)
 		if err != nil {
@@ -393,8 +395,8 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 		total, _ := s.querier.totalSearchCaptures(r.Context(), arg.Arg)
 
 		r = r.WithContext(templates.ContextWithPagination(r.Context(), &templates.Pagination{
-			Limit:  req.Limit,
-			Offset: req.Offset,
+			Limit:  arg.Limit,
+			Offset: arg.Offset,
 			Total:  total,
 		}))
 		res := make([]response, 0)

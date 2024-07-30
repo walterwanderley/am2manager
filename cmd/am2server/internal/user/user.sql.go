@@ -11,25 +11,19 @@ import (
 )
 
 const addUser = `-- name: AddUser :execresult
-INSERT INTO user(login, email, pass, status) 
-VALUES(?,?,?,?)
+INSERT INTO user(name, email, status) 
+VALUES(?,?,?)
 `
 
 type AddUserParams struct {
-	Login  string
+	Name   string
 	Email  string
-	Pass   string
 	Status string
 }
 
 // http: POST /users
 func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, addUser,
-		arg.Login,
-		arg.Email,
-		arg.Pass,
-		arg.Status,
-	)
+	return q.db.ExecContext(ctx, addUser, arg.Name, arg.Email, arg.Status)
 }
 
 const contUsers = `-- name: ContUsers :one
@@ -45,7 +39,7 @@ func (q *Queries) ContUsers(ctx context.Context) (int64, error) {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, login, email, pass, status, created_at, updated_at FROM user WHERE id = ?
+SELECT id, email, name, status, created_at, updated_at FROM user WHERE id = ?
 `
 
 // http: GET /users/{id}
@@ -54,9 +48,8 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Login,
 		&i.Email,
-		&i.Pass,
+		&i.Name,
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -64,39 +57,21 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	return i, err
 }
 
-const removeUser = `-- name: RemoveUser :execresult
-DELETE FROM user WHERE id = ?
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, name, status, created_at, updated_at from user WHERE email = ?
 `
 
-// http: DELETE /users/{id}
-func (q *Queries) RemoveUser(ctx context.Context, id int64) (sql.Result, error) {
-	return q.db.ExecContext(ctx, removeUser, id)
-}
-
-const setUserPassword = `-- name: SetUserPassword :execresult
-UPDATE user SET pass = ? WHERE id = ?
-`
-
-type SetUserPasswordParams struct {
-	Pass string
-	ID   int64
-}
-
-// http: PATCH /users/{id}/pass
-func (q *Queries) SetUserPassword(ctx context.Context, arg SetUserPasswordParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, setUserPassword, arg.Pass, arg.ID)
-}
-
-const validateUserEmail = `-- name: ValidateUserEmail :execresult
-UPDATE user SET status = 'VALID' WHERE id = ? AND pass = ?
-`
-
-type ValidateUserEmailParams struct {
-	ID   int64
-	Pass string
-}
-
-// http: GET /users/{id}/token/{pass}
-func (q *Queries) ValidateUserEmail(ctx context.Context, arg ValidateUserEmailParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, validateUserEmail, arg.ID, arg.Pass)
+// http: GET /users
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

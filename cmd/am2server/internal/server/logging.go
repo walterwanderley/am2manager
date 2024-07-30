@@ -10,7 +10,9 @@ import (
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("request", "uri", r.RequestURI, "method", r.Method, "ip", ipFromRequest(r))
+		if r.RequestURI != "/liveness" {
+			slog.Info("request", "uri", r.RequestURI, "method", r.Method, "ip", ipFromRequest(r))
+		}
 		next.ServeHTTP(w, r)
 	})
 }

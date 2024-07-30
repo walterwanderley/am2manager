@@ -20,6 +20,7 @@ import (
 
 	"github.com/flowchartsman/swaggerui"
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server"
+	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/auth"
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/etag"
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/litestream"
 	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
@@ -114,9 +115,18 @@ func run() error {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	var handler http.Handler = mux
+	if auth.Enabled() {
+		if err := auth.Setup(mux, db); err != nil {
+			slog.Error("setup auth", "error", err)
+			os.Exit(-1)
+		}
+		handler = auth.UserContext(handler)
+	}
+
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
-		Handler:           server.LoggingMiddleware(mux),
+		Handler:           server.LoggingMiddleware(handler),
 		WriteTimeout:      15 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 10 * time.Second,

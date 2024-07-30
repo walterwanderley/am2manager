@@ -17,9 +17,8 @@ type Service struct {
 
 func (s *Service) handleAddUser() http.HandlerFunc {
 	type request struct {
-		Login  string `form:"login" json:"login"`
+		Name   string `form:"name" json:"name"`
 		Email  string `form:"email" json:"email"`
-		Pass   string `form:"pass" json:"pass"`
 		Status string `form:"status" json:"status"`
 	}
 	type response struct {
@@ -34,9 +33,8 @@ func (s *Service) handleAddUser() http.HandlerFunc {
 			return
 		}
 		var arg AddUserParams
-		arg.Login = req.Login
+		arg.Name = req.Name
 		arg.Email = req.Email
-		arg.Pass = req.Pass
 		arg.Status = req.Status
 
 		result, err := s.querier.AddUser(r.Context(), arg)
@@ -74,9 +72,8 @@ func (s *Service) handleGetUser() http.HandlerFunc {
 	}
 	type response struct {
 		ID        int64      `json:"id,omitempty"`
-		Login     string     `json:"login,omitempty"`
 		Email     string     `json:"email,omitempty"`
-		Pass      string     `json:"pass,omitempty"`
+		Name      string     `json:"name,omitempty"`
 		Status    string     `json:"status,omitempty"`
 		CreatedAt time.Time  `json:"created_at,omitempty"`
 		UpdatedAt *time.Time `json:"updated_at,omitempty"`
@@ -102,9 +99,8 @@ func (s *Service) handleGetUser() http.HandlerFunc {
 		}
 		var res response
 		res.ID = result.ID
-		res.Login = result.Login
 		res.Email = result.Email
-		res.Pass = result.Pass
+		res.Name = result.Name
 		res.Status = result.Status
 		res.CreatedAt = result.CreatedAt
 		if result.UpdatedAt.Valid {
@@ -114,121 +110,39 @@ func (s *Service) handleGetUser() http.HandlerFunc {
 	}
 }
 
-func (s *Service) handleRemoveUser() http.HandlerFunc {
+func (s *Service) handleGetUserByEmail() http.HandlerFunc {
 	type request struct {
-		Id int64 `form:"id" json:"id"`
+		Email string `form:"email" json:"email"`
 	}
 	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
+		ID        int64      `json:"id,omitempty"`
+		Email     string     `json:"email,omitempty"`
+		Name      string     `json:"name,omitempty"`
+		Status    string     `json:"status,omitempty"`
+		CreatedAt time.Time  `json:"created_at,omitempty"`
+		UpdatedAt *time.Time `json:"updated_at,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req request
-		if str := r.PathValue("id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.Id = v
-			}
-		}
-		id := req.Id
+		req.Email = r.URL.Query().Get("email")
+		email := req.Email
 
-		result, err := s.querier.RemoveUser(r.Context(), id)
+		result, err := s.querier.GetUserByEmail(r.Context(), email)
 		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "RemoveUser")
+			slog.Error("sql call failed", "error", err, "method", "GetUserByEmail")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
-	}
-}
-
-func (s *Service) handleSetUserPassword() http.HandlerFunc {
-	type request struct {
-		Pass string `form:"pass" json:"pass"`
-		ID   int64  `form:"id" json:"id"`
-	}
-	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		req, err := server.Decode[request](r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-			return
+		var res response
+		res.ID = result.ID
+		res.Email = result.Email
+		res.Name = result.Name
+		res.Status = result.Status
+		res.CreatedAt = result.CreatedAt
+		if result.UpdatedAt.Valid {
+			res.UpdatedAt = &result.UpdatedAt.Time
 		}
-		if str := r.PathValue("id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.ID = v
-			}
-		}
-		var arg SetUserPasswordParams
-		arg.Pass = req.Pass
-		arg.ID = req.ID
-
-		result, err := s.querier.SetUserPassword(r.Context(), arg)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "SetUserPassword")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
-	}
-}
-
-func (s *Service) handleValidateUserEmail() http.HandlerFunc {
-	type request struct {
-		ID   int64  `form:"id" json:"id"`
-		Pass string `form:"pass" json:"pass"`
-	}
-	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req request
-		if str := r.PathValue("id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.ID = v
-			}
-		}
-		req.Pass = r.PathValue("pass")
-		var arg ValidateUserEmailParams
-		arg.ID = req.ID
-		arg.Pass = req.Pass
-
-		result, err := s.querier.ValidateUserEmail(r.Context(), arg)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "ValidateUserEmail")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
+		server.Encode(w, r, http.StatusOK, res)
 	}
 }
