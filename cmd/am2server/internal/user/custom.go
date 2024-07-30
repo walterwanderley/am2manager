@@ -6,8 +6,9 @@ import (
 )
 
 type UserRequest struct {
-	Email string
-	Name  string
+	Email   string
+	Name    string
+	Picture string
 }
 
 func (s *Service) GetOrInsert(ctx context.Context, r UserRequest, db *sql.DB) (*User, error) {
@@ -24,8 +25,23 @@ func (s *Service) GetOrInsert(ctx context.Context, r UserRequest, db *sql.DB) (*
 
 	queries := New(tx)
 
+	var picture sql.NullString
+	if r.Picture != "" {
+		picture.Valid = true
+		picture.String = r.Picture
+	}
+
 	user, _ := queries.GetUserByEmail(ctx, r.Email)
 	if user.ID > 0 {
+		if picture.Valid {
+			_, err := queries.updateUserPicture(ctx, updateUserPictureParams{
+				Picture: picture,
+				ID:      user.ID,
+			})
+			if err == nil {
+				tx.Commit()
+			}
+		}
 		return &user, nil
 	}
 
@@ -34,9 +50,10 @@ func (s *Service) GetOrInsert(ctx context.Context, r UserRequest, db *sql.DB) (*
 	}
 
 	result, err := queries.AddUser(ctx, AddUserParams{
-		Name:   r.Name,
-		Email:  r.Email,
-		Status: "VALID",
+		Name:    r.Name,
+		Email:   r.Email,
+		Picture: picture,
+		Status:  "VALID",
 	})
 	if err != nil {
 		return nil, err

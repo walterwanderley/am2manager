@@ -11,22 +11,31 @@
         <div class="collapsible-body"><span>{{.Description}}</span>
             <p><a href="/captures/{{.ID}}/file" class="waves-effect waves-light btn">
                     <i class="material-icons right">download</i>Download</a></p>
+            {{if EmbedFrame .DemoLink}}
+            <iframe id="player_{{.ID}}" type="text/html" width="640" height="360" src="{{.DemoLink}}"
+                frameborder="0"></iframe>
+            {{else if .DemoLink}}
+            <p>Demonstration: <a href="{{.DemoLink}}" target="_blank">{{.DemoLink}}</a></p>
+            {{end}}
         </div>
     </li>
     {{end}}
 </ul>
 {{if and Pagination (gt Pagination.TotalPages 1)}}
 <ul class="pagination">
-    <li class="{{if gt Pagination.CurrentPage 1}}waves-effect{{else}}disabled{{end}}"><a href="#"
-        {{if gt Pagination.CurrentPage 1}}hx-get="{{Pagination.URL Pagination.Limit Pagination.Prev}}" hx-target="#main-section" hx-push-url="true"{{end}}>
+    <li class="{{if gt Pagination.CurrentPage 1}}waves-effect{{else}}disabled{{end}}"><a href="#" {{if gt
+            Pagination.CurrentPage 1}}hx-get="{{Pagination.URL Pagination.Limit Pagination.Prev}}"
+            hx-target="#main-section" hx-push-url="true" {{end}}>
             <i class="material-icons">chevron_left</i></a></li>
     {{range Pagination.PageNumbers}}
-    <li class="{{if eq . Pagination.CurrentPage}}active{{else}}waves-effect{{end}}"><a href="#" hx-get="{{Pagination.URLPage .}}"
-        hx-target="#main-section" hx-push-url="true">{{.}}</a></li>
+    <li class="{{if eq . Pagination.CurrentPage}}active{{else}}waves-effect{{end}}"><a href="#"
+            hx-get="{{Pagination.URLPage .}}" hx-target="#main-section" hx-push-url="true">{{.}}</a></li>
     {{end}}
     <li class="{{if lt Pagination.CurrentPage Pagination.TotalPages}}waves-effect{{else}}disabled{{end}}">
-        <a href="#" {{if lt Pagination.CurrentPage Pagination.TotalPages}} hx-get="{{Pagination.URL Pagination.Limit Pagination.Next}}"
-            hx-target="#main-section" hx-push-url="true"{{end}}><i class="material-icons">chevron_right</i></a></li>
+        <a href="#" {{if lt Pagination.CurrentPage Pagination.TotalPages}}
+            hx-get="{{Pagination.URL Pagination.Limit Pagination.Next}}" hx-target="#main-section" hx-push-url="true"
+            {{end}}><i class="material-icons">chevron_right</i></a>
+    </li>
 </ul>
 {{end}}
 {{end}}

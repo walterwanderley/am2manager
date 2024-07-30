@@ -10,28 +10,6 @@ import (
 	"database/sql"
 )
 
-const addReview = `-- name: AddReview :execresult
-INSERT INTO review(user_id, capture_id, rate, comment) 
-VALUES(?,?,?,?)
-`
-
-type AddReviewParams struct {
-	UserID    sql.NullInt64
-	CaptureID int64
-	Rate      int64
-	Comment   sql.NullString
-}
-
-// http: POST /reviews
-func (q *Queries) AddReview(ctx context.Context, arg AddReviewParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, addReview,
-		arg.UserID,
-		arg.CaptureID,
-		arg.Rate,
-		arg.Comment,
-	)
-}
-
 const listReviewsByCapture = `-- name: ListReviewsByCapture :many
 SELECT id, user_id, capture_id, rate, comment, created_at, updated_at FROM review
 WHERE capture_id = ?
@@ -106,11 +84,52 @@ func (q *Queries) ListReviewsByUser(ctx context.Context, userID sql.NullInt64) (
 	return items, nil
 }
 
-const removeReview = `-- name: RemoveReview :execresult
+const addReview = `-- name: addReview :execresult
+INSERT INTO review(user_id, capture_id, rate, comment) 
+VALUES(?,?,?,?)
+`
+
+type addReviewParams struct {
+	UserID    sql.NullInt64
+	CaptureID int64
+	Rate      int64
+	Comment   sql.NullString
+}
+
+// http: POST /reviews
+func (q *Queries) addReview(ctx context.Context, arg addReviewParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, addReview,
+		arg.UserID,
+		arg.CaptureID,
+		arg.Rate,
+		arg.Comment,
+	)
+}
+
+const getReview = `-- name: getReview :one
+SELECT id, user_id, capture_id, rate, comment, created_at, updated_at FROM review WHERE id = ?
+`
+
+func (q *Queries) getReview(ctx context.Context, id int64) (Review, error) {
+	row := q.db.QueryRowContext(ctx, getReview, id)
+	var i Review
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CaptureID,
+		&i.Rate,
+		&i.Comment,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const removeReview = `-- name: removeReview :execresult
 DELETE FROM review WHERE id = ?
 `
 
 // http: DELETE /reviews/{id}
-func (q *Queries) RemoveReview(ctx context.Context, id int64) (sql.Result, error) {
+func (q *Queries) removeReview(ctx context.Context, id int64) (sql.Result, error) {
 	return q.db.ExecContext(ctx, removeReview, id)
 }

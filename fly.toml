@@ -21,6 +21,7 @@ primary_region = 'gru'
   LITESTREAM_URL = 's3:/am2manager'
   LITESTREAM_FORCE_PATH_STYLE = 'true'
   DSN = '/data/as2manager.db'
+  REDIRECT_SERVER = 'https://am2manager.fly.dev'
 
 
 [http_service]

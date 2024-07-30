@@ -24,7 +24,7 @@ func (s *CustomService) RegisterHandlers(mux *http.ServeMux) {
 	//s.Service.RegisterHandlers(mux)
 	mux.HandleFunc("GET /find-capture", s.handleFindCapture())
 	mux.HandleFunc("POST /captures-convert", s.handleConvertCapture())
-	mux.HandleFunc("POST /captures-upload", s.handleAddCapture())
+	mux.HandleFunc("POST /captures", s.handleAddCapture())
 	mux.HandleFunc("GET /captures/{id}/file", s.handleGetCaptureFile())
 	mux.HandleFunc("GET /captures", s.handleSearchCaptures())
 	mux.HandleFunc("GET /captures/{id}", s.handleGetCapture())
@@ -209,7 +209,6 @@ func (s *CustomService) handleConvertCapture() http.HandlerFunc {
 
 func (s *CustomService) handleAddCapture() http.HandlerFunc {
 	type request struct {
-		UserID      *int64  `form:"user_id" json:"user_id"`
 		Name        string  `form:"name" json:"name"`
 		Type        string  `form:"type" json:"type"`
 		HasCab      *bool   `form:"has_cab" json:"has_cab"`
@@ -224,8 +223,9 @@ func (s *CustomService) handleAddCapture() http.HandlerFunc {
 			return
 		}
 		var arg addCaptureParams
-		if req.UserID != nil {
-			arg.UserID = sql.NullInt64{Valid: true, Int64: *req.UserID}
+		user := templates.UserFromContext(r.Context())
+		if user.ID > 0 {
+			arg.UserID = sql.NullInt64{Valid: true, Int64: user.ID}
 		}
 		arg.Name = req.Name
 		arg.Type = req.Type
@@ -353,6 +353,7 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 		Downloads   int64     `json:"downloads,omitempty"`
 		HasCab      *bool     `json:"has_cab,omitempty"`
 		Type        string    `json:"type,omitempty"`
+		DemoLink    string    `json:"demo_link,omitempty"`
 		CreatedAt   time.Time `json:"created_at,omitempty"`
 	}
 
@@ -413,6 +414,7 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			}
 			item.Type = r.Type
 			item.CreatedAt = r.CreatedAt
+			item.DemoLink = r.DemoLink.String
 			res = append(res, item)
 		}
 		server.Encode(w, r, http.StatusOK, res)

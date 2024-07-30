@@ -3,6 +3,7 @@
 package user
 
 import (
+	"database/sql"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -17,9 +18,10 @@ type Service struct {
 
 func (s *Service) handleAddUser() http.HandlerFunc {
 	type request struct {
-		Name   string `form:"name" json:"name"`
-		Email  string `form:"email" json:"email"`
-		Status string `form:"status" json:"status"`
+		Name    string  `form:"name" json:"name"`
+		Email   string  `form:"email" json:"email"`
+		Status  string  `form:"status" json:"status"`
+		Picture *string `form:"picture" json:"picture"`
 	}
 	type response struct {
 		LastInsertId int64 `json:"last_insert_id"`
@@ -36,6 +38,9 @@ func (s *Service) handleAddUser() http.HandlerFunc {
 		arg.Name = req.Name
 		arg.Email = req.Email
 		arg.Status = req.Status
+		if req.Picture != nil {
+			arg.Picture = sql.NullString{Valid: true, String: *req.Picture}
+		}
 
 		result, err := s.querier.AddUser(r.Context(), arg)
 		if err != nil {
@@ -77,6 +82,7 @@ func (s *Service) handleGetUser() http.HandlerFunc {
 		Status    string     `json:"status,omitempty"`
 		CreatedAt time.Time  `json:"created_at,omitempty"`
 		UpdatedAt *time.Time `json:"updated_at,omitempty"`
+		Picture   *string    `json:"picture,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +112,9 @@ func (s *Service) handleGetUser() http.HandlerFunc {
 		if result.UpdatedAt.Valid {
 			res.UpdatedAt = &result.UpdatedAt.Time
 		}
+		if result.Picture.Valid {
+			res.Picture = &result.Picture.String
+		}
 		server.Encode(w, r, http.StatusOK, res)
 	}
 }
@@ -121,6 +130,7 @@ func (s *Service) handleGetUserByEmail() http.HandlerFunc {
 		Status    string     `json:"status,omitempty"`
 		CreatedAt time.Time  `json:"created_at,omitempty"`
 		UpdatedAt *time.Time `json:"updated_at,omitempty"`
+		Picture   *string    `json:"picture,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -142,6 +152,9 @@ func (s *Service) handleGetUserByEmail() http.HandlerFunc {
 		res.CreatedAt = result.CreatedAt
 		if result.UpdatedAt.Valid {
 			res.UpdatedAt = &result.UpdatedAt.Time
+		}
+		if result.Picture.Valid {
+			res.Picture = &result.Picture.String
 		}
 		server.Encode(w, r, http.StatusOK, res)
 	}

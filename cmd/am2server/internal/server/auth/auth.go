@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,45 +17,36 @@ import (
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/user"
-)
-
-type contextKey int
-
-const (
-	userContext contextKey = iota
+	"github.com/walterwanderley/am2manager/cmd/am2server/templates"
 )
 
 var (
-	clientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
-	key          = []byte("defaultkey1234567890123456789012")
-	sessionKey   = "defaultsessionkey123456789012345"
+	clientSecret  = os.Getenv("GOOGLE_CLIENT_SECRET")
+	hashKey       = "defaultkey1234567890123456789012"
+	encriptionKey = []byte("defaultsessionkey123456789012345")
 
-	sessionStore = sessions.NewCookieStore([]byte(sessionKey))
+	sessionStore = sessions.NewCookieStore([]byte(hashKey), encriptionKey)
 )
-
-type User struct {
-	ID    int64
-	Email string
-	Name  string
-}
 
 func Enabled() bool {
 	return clientSecret != ""
 }
 
 func Setup(mux *http.ServeMux, db *sql.DB) error {
-	key = []byte(clientSecret[:29] + "key")
-	sessionKey = clientSecret[:25] + "session"
+	redirectServer := os.Getenv("REDIRECT_SERVER")
+	if redirectServer == "" {
+		redirectServer = "http://localhost:8080"
+	}
+	hashKey = clientSecret[:19] + "am2managerkey"
+	encriptionKey = append([]byte(clientSecret[:15]), []byte("am2managersession")...)
 	var (
-		clientID       = "60988106159-10utjruhmjssgqe3vv09oo2chnfl0j7g.apps.googleusercontent.com"
-		clientSecret   = os.Getenv("GOOGLE_CLIENT_SECRET")
-		issuer         = "https://accounts.google.com"
-		redirectServer = "https://am2manager.fly.dev"
-		callbackPath   = "/auth"
-		scopes         = []string{"https://www.googleapis.com/auth/userinfo.email"}
+		clientID     = "60988106159-10utjruhmjssgqe3vv09oo2chnfl0j7g.apps.googleusercontent.com"
+		issuer       = "https://accounts.google.com"
+		callbackPath = "/auth"
+		scopes       = []string{"https://www.googleapis.com/auth/userinfo.email"}
 	)
 
-	cookieHandler := httphelper.NewCookieHandler(key, key)
+	cookieHandler := httphelper.NewCookieHandler([]byte(hashKey+hashKey), encriptionKey)
 	options := []rp.Option{
 		rp.WithCookieHandler(cookieHandler),
 		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5 * time.Second)),
@@ -85,27 +76,27 @@ func Setup(mux *http.ServeMux, db *sql.DB) error {
 
 func UserContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var u User
-		session, _ := sessionStore.Get(r, sessionKey)
-		if email, ok := session.Values["email"]; ok {
-			u.Email = email.(string)
-		}
-		if name, ok := session.Values["name"]; ok {
-			u.Name = name.(string)
-		}
-		if id, ok := session.Values["id"]; ok {
-			u.ID = id.(int64)
-		}
+		if path := r.URL.Path; path != "/liveness" && !strings.Contains(path, ".") {
+			var u templates.User
+			session, _ := sessionStore.Get(r, hashKey)
+			if email, ok := session.Values["email"]; ok {
+				u.Email = email.(string)
+			}
+			if name, ok := session.Values["name"]; ok {
+				u.Name = name.(string)
+			}
+			if id, ok := session.Values["id"]; ok {
+				u.ID = id.(int64)
+			}
+			if picture, ok := session.Values["picture"]; ok {
+				u.Picture = picture.(string)
+			}
 
-		r = r.WithContext(context.WithValue(r.Context(), userContext, u))
+			r = r.WithContext(templates.ContextWithUser(r.Context(), u))
+		}
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func UserFromContext(ctx context.Context) User {
-	user, _ := ctx.Value(userContext).(User)
-	return user
 }
 
 func login(provider rp.RelyingParty) http.HandlerFunc {
@@ -116,15 +107,16 @@ func login(provider rp.RelyingParty) http.HandlerFunc {
 }
 
 func userInfo(w http.ResponseWriter, r *http.Request) {
-	user := UserFromContext(r.Context())
+	user := templates.UserFromContext(r.Context())
 	json.NewEncoder(w).Encode(user)
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
-	session, _ := sessionStore.Get(r, sessionKey)
+	session, _ := sessionStore.Get(r, hashKey)
 	delete(session.Values, "email")
 	delete(session.Values, "name")
 	delete(session.Values, "id")
+	delete(session.Values, "picture")
 	err := session.Save(r, w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -133,18 +125,19 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func saveUserinfo[C oidc.IDClaims](resourceServer rs.ResourceServer, db *sql.DB) rp.CodeExchangeUserinfoCallback[C] {
+func saveUserinfo[C oidc.IDClaims](_ rs.ResourceServer, db *sql.DB) rp.CodeExchangeUserinfoCallback[C] {
 	userService := user.NewService(user.New(db))
 	return func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[C], state string, rp rp.RelyingParty, info *oidc.UserInfo) {
-		session, _ := sessionStore.Get(r, sessionKey)
+		session, _ := sessionStore.Get(r, hashKey)
 		session.Options.SameSite = http.SameSiteLaxMode
 		session.Options.HttpOnly = true
 		session.Options.Secure = Enabled()
 		session.Options.MaxAge = 86400 //1 day
 
 		u, err := userService.GetOrInsert(r.Context(), user.UserRequest{
-			Email: info.Email,
-			Name:  info.Name,
+			Email:   info.Email,
+			Name:    info.Name,
+			Picture: info.Picture,
 		}, db)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -154,6 +147,7 @@ func saveUserinfo[C oidc.IDClaims](resourceServer rs.ResourceServer, db *sql.DB)
 		session.Values["email"] = u.Email
 		session.Values["name"] = u.Name
 		session.Values["id"] = u.ID
+		session.Values["picture"] = u.Picture.String
 
 		err = session.Save(r, w)
 		if err != nil {

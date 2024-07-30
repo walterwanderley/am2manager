@@ -11,19 +11,25 @@ import (
 )
 
 const addUser = `-- name: AddUser :execresult
-INSERT INTO user(name, email, status) 
-VALUES(?,?,?)
+INSERT INTO user(name, email, status, picture) 
+VALUES(?,?,?,?)
 `
 
 type AddUserParams struct {
-	Name   string
-	Email  string
-	Status string
+	Name    string
+	Email   string
+	Status  string
+	Picture sql.NullString
 }
 
 // http: POST /users
 func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, addUser, arg.Name, arg.Email, arg.Status)
+	return q.db.ExecContext(ctx, addUser,
+		arg.Name,
+		arg.Email,
+		arg.Status,
+		arg.Picture,
+	)
 }
 
 const contUsers = `-- name: ContUsers :one
@@ -39,7 +45,7 @@ func (q *Queries) ContUsers(ctx context.Context) (int64, error) {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, email, name, status, created_at, updated_at FROM user WHERE id = ?
+SELECT id, email, name, status, created_at, updated_at, picture FROM user WHERE id = ?
 `
 
 // http: GET /users/{id}
@@ -53,12 +59,13 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Picture,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, name, status, created_at, updated_at from user WHERE email = ?
+SELECT id, email, name, status, created_at, updated_at, picture from user WHERE email = ?
 `
 
 // http: GET /users
@@ -72,6 +79,20 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Picture,
 	)
 	return i, err
+}
+
+const updateUserPicture = `-- name: updateUserPicture :execresult
+UPDATE user SET picture = ?, updated_at = now()  WHERE id = ?
+`
+
+type updateUserPictureParams struct {
+	Picture sql.NullString
+	ID      int64
+}
+
+func (q *Queries) updateUserPicture(ctx context.Context, arg updateUserPictureParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUserPicture, arg.Picture, arg.ID)
 }

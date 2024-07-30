@@ -30,6 +30,7 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 		HasCab      *bool     `json:"has_cab,omitempty"`
 		Type        string    `json:"type,omitempty"`
 		CreatedAt   time.Time `json:"created_at,omitempty"`
+		DemoLink    *string   `json:"demo_link,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -80,6 +81,9 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 			}
 			item.Type = r.Type
 			item.CreatedAt = r.CreatedAt
+			if r.DemoLink.Valid {
+				item.DemoLink = &r.DemoLink.String
+			}
 			res = append(res, item)
 		}
 		server.Encode(w, r, http.StatusOK, res)

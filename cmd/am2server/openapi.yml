@@ -15,53 +15,6 @@ tags:
   
   
 paths:
-  /captures-upload:
-      post:
-          requestBody:
-              content:
-                  multipart/form-data:
-                      schema:
-                          properties:
-                              data:
-                                  format: binary
-                                  type: string
-                              demo_link:
-                                  type: string
-                              description:
-                                  type: string
-                              has_cab:
-                                  type: boolean
-                              name:
-                                  type: string
-                              type:
-                                  type: string
-                              user_id:
-                                  format: int64
-                                  type: integer
-                          type: object
-          responses:
-              "200":
-                  content:
-                      application/json:
-                          schema:
-                              properties:
-                                  last_insert_id:
-                                      format: int64
-                                      type: integer
-                                  rows_affected:
-                                      format: int64
-                                      type: integer
-                              type: object
-                  description: OK
-              default:
-                  content:
-                      text/plain:
-                          schema:
-                              type: string
-                  description: Error message
-          summary: AddCapture
-          tags:
-              - capture
   /captures/{id}:
       get:
           parameters:
@@ -111,68 +64,39 @@ paths:
           summary: GetCaptureFile
           tags:
               - capture
-  /users/{id}/kick:
-      patch:
-          parameters:
-              - in: path
-                name: id
-                schema:
-                  format: int64
-                  type: integer
-          requestBody:
-              content:
-                  application/json:
-                      schema:
-                          properties: null
-                          type: object
-                  application/x-www-form-urlencoded:
-                      schema:
-                          properties: null
-                          type: object
-          responses:
-              "200":
-                  content:
-                      application/json:
-                          schema:
-                              properties:
-                                  last_insert_id:
-                                      format: int64
-                                      type: integer
-                                  rows_affected:
-                                      format: int64
-                                      type: integer
-                              type: object
-                  description: OK
-              default:
-                  content:
-                      text/plain:
-                          schema:
-                              type: string
-                  description: Error message
-          summary: KickUser
-          tags:
-              - user
-  /users/{id}/pass:
-      patch:
-          parameters:
-              - in: path
-                name: id
-                schema:
-                  format: int64
-                  type: integer
+  /reviews:
+      post:
           requestBody:
               content:
                   application/json:
                       schema:
                           properties:
-                              pass:
+                              capture_id:
+                                  format: int64
+                                  type: integer
+                              comment:
                                   type: string
+                              rate:
+                                  format: int64
+                                  type: integer
+                              user_id:
+                                  format: int64
+                                  type: integer
                           type: object
                   application/x-www-form-urlencoded:
                       schema:
                           properties:
-                              pass:
+                              capture_id:
+                                  format: int64
+                                  type: integer
+                              comment:
                                   type: string
+                              rate:
+                                  format: int64
+                                  type: integer
+                              user_id:
+                                  format: int64
+                                  type: integer
                           type: object
           responses:
               "200":
@@ -194,21 +118,17 @@ paths:
                           schema:
                               type: string
                   description: Error message
-          summary: SetUserPassword
+          summary: AddReview
           tags:
-              - user
-  /users/{id}/token/{pass}:
-      get:
+              - review
+  /reviews/{id}:
+      delete:
           parameters:
               - in: path
                 name: id
                 schema:
                   format: int64
                   type: integer
-              - in: path
-                name: pass
-                schema:
-                  type: string
           responses:
               "200":
                   content:
@@ -229,35 +149,58 @@ paths:
                           schema:
                               type: string
                   description: Error message
-          summary: ValidateUserEmail
+          summary: RemoveReview
           tags:
-              - user
-  /users/by-email:
-      get:
-          parameters:
-              - in: query
-                name: email
-                schema:
-                  type: string
-          responses:
-              "200":
-                  content:
-                      application/json:
-                          schema:
-                              $ref: '#/components/schemas/userUser'
-                  description: OK
-              default:
-                  content:
-                      text/plain:
-                          schema:
-                              type: string
-                  description: Error message
-          summary: GetUserByEmail
-          tags:
-              - user
+              - review
   
   /captures:
     get:
+      post:
+          requestBody:
+              content:
+                  multipart/form-data:
+                      schema:
+                          properties:
+                              data:
+                                  format: binary
+                                  type: string
+                              demo_link:
+                                  type: string
+                              description:
+                                  type: string
+                              has_cab:
+                                  type: boolean
+                              name:
+                                  type: string
+                              type:
+                                  type: string
+                              user_id:
+                                  format: int64
+                                  type: integer
+                          type: object
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              properties:
+                                  last_insert_id:
+                                      format: int64
+                                      type: integer
+                                  rows_affected:
+                                      format: int64
+                                      type: integer
+                              type: object
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: AddCapture
+          tags:
+              - capture
       summary: SearchCaptures
       tags:
           - capture
@@ -327,104 +270,6 @@ paths:
               schema:
                 type: string  
     
-  /reviews:
-    post:
-      summary: AddReview
-      tags:
-          - review
-      
-      
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: integer
-                  format: int64
-                capture_id:
-                  type: integer
-                  format: int64
-                rate:
-                  type: integer
-                  format: int64
-                comment:
-                  type: string
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: integer
-                  format: int64
-                capture_id:
-                  type: integer
-                  format: int64
-                rate:
-                  type: integer
-                  format: int64
-                comment:
-                  type: string
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  last_insert_id:
-                    type: integer
-                    format: int64
-                  rows_affected:
-                    type: integer
-                    format: int64
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
-  /reviews/{id}:
-    delete:
-      summary: RemoveReview
-      tags:
-          - review
-      
-      
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  last_insert_id:
-                    type: integer
-                    format: int64
-                  rows_affected:
-                    type: integer
-                    format: int64
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
   /users/{user_id}/reviews:
     get:
       summary: ListReviewsByUser
@@ -475,6 +320,8 @@ paths:
                   type: string
                 status:
                   type: string
+                picture:
+                  type: string
           application/x-www-form-urlencoded:
             schema:
               type: object
@@ -484,6 +331,8 @@ paths:
                 email:
                   type: string
                 status:
+                  type: string
+                picture:
                   type: string
       
       responses:
@@ -658,6 +507,8 @@ components:
         created_at:
           type: string
           format: date-time
+        demo_link:
+          type: string
     reviewReview:
       type: object
       properties:
@@ -699,5 +550,7 @@ components:
         updated_at:
           type: string
           format: date-time
+        picture:
+          type: string
     
   

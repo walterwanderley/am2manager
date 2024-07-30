@@ -48,6 +48,7 @@ type User struct {
 	Status    string
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
+	Picture   sql.NullString
 }
 
 type UserFavorite struct {

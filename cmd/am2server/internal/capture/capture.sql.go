@@ -56,7 +56,7 @@ func (q *Queries) GetCaptureFile(ctx context.Context, id int64) (GetCaptureFileR
 }
 
 const searchCaptures = `-- name: SearchCaptures :many
-SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link 
 FROM capture c
 WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
 OR c.data_hash = ?1 OR c.am2_hash = ?1
@@ -78,6 +78,7 @@ type SearchCapturesRow struct {
 	HasCab      sql.NullBool
 	Type        string
 	CreatedAt   time.Time
+	DemoLink    sql.NullString
 }
 
 // http: GET /captures
@@ -98,6 +99,7 @@ func (q *Queries) SearchCaptures(ctx context.Context, arg SearchCapturesParams) 
 			&i.HasCab,
 			&i.Type,
 			&i.CreatedAt,
+			&i.DemoLink,
 		); err != nil {
 			return nil, err
 		}

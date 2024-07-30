@@ -12,6 +12,8 @@
             class="material-icons left">upload</i>Upload Captures</a></li>
       <li><a hx-get="/find-capture" hx-push-url="true" hx-target="#main-section"><i
             class="material-icons left">search</i>Search Captures</a></li>
+      {{if not LoggedIn}}<li><a href="/login"><i class="material-icons left">login</i>Sign-in</a></li>
+      {{else}}<li><a href="/logout"><img src="{{User.Picture}}" alt="{{FirstChar User.Email}}" class="circle" title="Click to logout"></a></li>{{end}}
     </ul>
   </div>
 </nav>
@@ -21,7 +23,7 @@
       <input type="hidden" name="offset" value="0">
       <input type="hidden" name="limit" value="10">
       <div class="input-field">
-        <input id="search" name="arg" type="search">
+        <input id="search" name="arg" type="search" placeholder="Search Captures">
         <label class="label-icon" for="search"><i class="material-icons">search</i></label>
         <i class="material-icons">close</i>
       </div>
@@ -37,4 +39,6 @@
         class="material-icons left">upload</i>Upload Captures</a></li>
   <li><a hx-get="/find-capture" hx-push-url="true" hx-target="#main-section"><i
         class="material-icons left">search</i>Search Captures</a></li>
+  {{if not LoggedIn}}<li><a href="/login"><i class="material-icons left">login</i>Sign-in</a></li>
+  {{else}}<li><a href="/logout"><i class="material-icons left">logout</i>Sign-out</a></li>{{end}}
 </ul>

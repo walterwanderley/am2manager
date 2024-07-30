@@ -16,49 +16,6 @@ type Service struct {
 	querier *Queries
 }
 
-func (s *Service) handleAddReview() http.HandlerFunc {
-	type request struct {
-		UserID    *int64  `form:"user_id" json:"user_id"`
-		CaptureID int64   `form:"capture_id" json:"capture_id"`
-		Rate      int64   `form:"rate" json:"rate"`
-		Comment   *string `form:"comment" json:"comment"`
-	}
-	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		req, err := server.Decode[request](r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-			return
-		}
-		var arg AddReviewParams
-		if req.UserID != nil {
-			arg.UserID = sql.NullInt64{Valid: true, Int64: *req.UserID}
-		}
-		arg.CaptureID = req.CaptureID
-		arg.Rate = req.Rate
-		if req.Comment != nil {
-			arg.Comment = sql.NullString{Valid: true, String: *req.Comment}
-		}
-
-		result, err := s.querier.AddReview(r.Context(), arg)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "AddReview")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
-	}
-}
-
 func (s *Service) handleListReviewsByCapture() http.HandlerFunc {
 	type request struct {
 		CaptureID int64 `form:"capture_id" json:"capture_id"`
@@ -167,41 +124,5 @@ func (s *Service) handleListReviewsByUser() http.HandlerFunc {
 			res = append(res, item)
 		}
 		server.Encode(w, r, http.StatusOK, res)
-	}
-}
-
-func (s *Service) handleRemoveReview() http.HandlerFunc {
-	type request struct {
-		Id int64 `form:"id" json:"id"`
-	}
-	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req request
-		if str := r.PathValue("id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.Id = v
-			}
-		}
-		id := req.Id
-
-		result, err := s.querier.RemoveReview(r.Context(), id)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "RemoveReview")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
 	}
 }

@@ -1,11 +1,14 @@
-/* name: AddReview :execresult */
+/* name: addReview :execresult */
 /* http: POST /reviews */
 INSERT INTO review(user_id, capture_id, rate, comment) 
 VALUES(?,?,?,?);
 
-/* name: RemoveReview :execresult */
+/* name: removeReview :execresult */
 /* http: DELETE /reviews/{id} */
 DELETE FROM review WHERE id = ?;
+
+/* name: getReview :one */
+SELECT * FROM review WHERE id = ?;
 
 /* name: ListReviewsByUser :many */
 /* http: GET /users/{user_id}/reviews */

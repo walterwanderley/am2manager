@@ -11,13 +11,14 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/htmx"
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server/watcher"
 )
 
 // Content-Security-Policy
-const csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com/ajax/libs/font-awesome/; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com/ajax/libs/font-awesome/"
+const csp = "default-src 'self'; img-src 'self' *.googleusercontent.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://www.youtube.com https://youtube.com;"
 
 type key int
 
@@ -28,6 +29,8 @@ const (
 	messageContext
 	// paginationContext key to store pagination config on context
 	paginationContext
+	// userContext key to store logged user
+	userContext
 )
 
 var (
@@ -39,6 +42,17 @@ var (
 
 	provider templatesProvider
 )
+
+type User struct {
+	ID      int64
+	Email   string
+	Name    string
+	Picture string
+}
+
+func (u User) Logged() bool {
+	return u.ID > 0
+}
 
 type Pagination struct {
 	request *http.Request
@@ -143,11 +157,12 @@ func RegisterHandlers(mux *http.ServeMux, devMode bool) error {
 		watch.Start(context.Background())
 		mux.Handle("GET /reload", watch)
 	} else {
+		base := template.New("base.html").Funcs(contextFunctions(context.Background(), nil))
 		provider = &templateRender{
 			templatesFS: templatesFS,
 			dynamic: template.Must(template.ParseFS(templatesFS,
 				"layout/content.html")),
-			full: template.Must(template.ParseFS(templatesFS,
+			full: template.Must(base.ParseFS(templatesFS,
 				"layout/base.html",
 				"layout/header.html",
 				"layout/footer.html")),
@@ -196,6 +211,15 @@ func ContextWithTemplates(ctx context.Context, templates ...string) context.Cont
 	return context.WithValue(ctx, templatesContext, templates)
 }
 
+func ContextWithUser(ctx context.Context, user User) context.Context {
+	return context.WithValue(ctx, userContext, user)
+}
+
+func UserFromContext(ctx context.Context) User {
+	u, _ := ctx.Value(userContext).(User)
+	return u
+}
+
 func RenderHTML(w http.ResponseWriter, r *http.Request, content any) (err error) {
 	if msg, ok := r.Context().Value(messageContext).(htmx.Message); ok {
 		return msg.Render(w, r)
@@ -218,7 +242,7 @@ func RenderHTML(w http.ResponseWriter, r *http.Request, content any) (err error)
 		return err
 	}
 
-	t, err := base.Funcs(contextFunctions(r)).ParseFS(provider.TemplatesFS(), templates...)
+	t, err := base.Funcs(contextFunctions(r.Context(), r)).ParseFS(provider.TemplatesFS(), templates...)
 	if err != nil {
 		return err
 	}
@@ -238,7 +262,8 @@ func (t *templateDevRender) DevMode() bool {
 }
 
 func (t *templateDevRender) Full() *template.Template {
-	return template.Must(template.ParseFS(t.templatesFS,
+	base := template.New("base.html").Funcs(contextFunctions(context.Background(), nil))
+	return template.Must(base.ParseFS(t.templatesFS,
 		"layout/base.html",
 		"layout/header.html",
 		"layout/footer.html"))
@@ -276,26 +301,44 @@ func (t *templateRender) TemplatesFS() fs.FS {
 	return t.templatesFS
 }
 
-func contextFunctions(r *http.Request) template.FuncMap {
+func contextFunctions(ctx context.Context, r *http.Request) template.FuncMap {
 	copy := make(template.FuncMap)
 	for k, v := range funcs {
 		copy[k] = v
 	}
-	copy["Header"] = func(key string) string {
-		return r.Header.Get(key)
+	if r != nil {
+		copy["Header"] = func(key string) string {
+			return r.Header.Get(key)
+		}
+		copy["HasQuery"] = func(key string) bool {
+			return r.URL.Query().Has(key)
+		}
+		copy["Query"] = func(key string) string {
+			return r.URL.Query().Get(key)
+		}
+		pagination, _ := r.Context().Value(paginationContext).(*Pagination)
+		if pagination != nil {
+			pagination.request = r
+		}
+		copy["Pagination"] = func() *Pagination {
+			return pagination
+		}
 	}
-	copy["HasQuery"] = func(key string) bool {
-		return r.URL.Query().Has(key)
+	user, _ := ctx.Value(userContext).(User)
+	copy["User"] = func() User {
+		return user
 	}
-	copy["Query"] = func(key string) string {
-		return r.URL.Query().Get(key)
+	copy["LoggedIn"] = func() bool {
+		return user.ID > 0
 	}
-	pagination, _ := r.Context().Value(paginationContext).(*Pagination)
-	if pagination != nil {
-		pagination.request = r
+	copy["EmbedFrame"] = func(link string) bool {
+		return strings.Contains(link, "youtube.com/embed/")
 	}
-	copy["Pagination"] = func() *Pagination {
-		return pagination
+	copy["FirstChar"] = func(str string) string {
+		for _, c := range str {
+			return string(unicode.ToUpper(c))
+		}
+		return str
 	}
 	return copy
 }

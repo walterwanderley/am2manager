@@ -13,7 +13,7 @@ RETURNING data, name;
 
 /* name: SearchCaptures :many */
 /* http: GET /captures */
-SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link 
 FROM capture c
 WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
 OR c.data_hash = sqlc.arg('arg') OR c.am2_hash = sqlc.arg('arg')
