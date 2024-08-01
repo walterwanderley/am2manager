@@ -16,60 +16,6 @@ type Service struct {
 	querier *Queries
 }
 
-func (s *Service) handleListReviewsByCapture() http.HandlerFunc {
-	type request struct {
-		CaptureID int64 `form:"capture_id" json:"capture_id"`
-	}
-	type response struct {
-		ID        int64      `json:"id,omitempty"`
-		UserID    *int64     `json:"user_id,omitempty"`
-		CaptureID int64      `json:"capture_id,omitempty"`
-		Rate      int64      `json:"rate,omitempty"`
-		Comment   *string    `json:"comment,omitempty"`
-		CreatedAt time.Time  `json:"created_at,omitempty"`
-		UpdatedAt *time.Time `json:"updated_at,omitempty"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req request
-		if str := r.PathValue("capture_id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.CaptureID = v
-			}
-		}
-		captureID := req.CaptureID
-
-		result, err := s.querier.ListReviewsByCapture(r.Context(), captureID)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "ListReviewsByCapture")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		res := make([]response, 0)
-		for _, r := range result {
-			var item response
-			item.ID = r.ID
-			if r.UserID.Valid {
-				item.UserID = &r.UserID.Int64
-			}
-			item.CaptureID = r.CaptureID
-			item.Rate = r.Rate
-			if r.Comment.Valid {
-				item.Comment = &r.Comment.String
-			}
-			item.CreatedAt = r.CreatedAt
-			if r.UpdatedAt.Valid {
-				item.UpdatedAt = &r.UpdatedAt.Time
-			}
-			res = append(res, item)
-		}
-		server.Encode(w, r, http.StatusOK, res)
-	}
-}
-
 func (s *Service) handleListReviewsByUser() http.HandlerFunc {
 	type request struct {
 		UserID *int64 `form:"user_id" json:"user_id"`

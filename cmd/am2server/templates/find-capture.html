@@ -7,17 +7,38 @@
 
 <div class="row">
     <div class="col s6">
-        Most downloaded captures
-        {{range .MostDownloaded}}
-        <p><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a></p>
-        {{end}}
+        <table>
+            <thead>
+                <td>Most downloaded</td>
+            </thead>
+            <tbody>
+                {{range .MostDownloaded}}
+                <tr>
+                    <td>
+                        <span class="truncate"><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section"
+                                hx-push-url="true">{{.Name}}</a></span>
+                    </td>
+                </tr>
+            </tbody>
+            {{end}}
+        </table>
     </div>
-
     <div class="col s6">
-        Most recent captures
-        {{range .MostRecent}}
-        <p><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a></p>
-        {{end}}
+        <table>
+            <thead>
+                <td>Most recent</td>
+            </thead>
+            <tbody>
+                {{range .MostRecent}}
+                <tr>
+                    <td>
+                        <span class="truncate"><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section"
+                                hx-push-url="true">{{.Name}}</a></span>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -27,7 +48,7 @@
         <input type="hidden" name="limit" value="10">
         <div class="input-field">
             <label class="label-icon" for="search"><i class="material-icons">search</i></label>
-            <input id="search" name="arg" type="search" placeholder="Filter all captures">            
+            <input id="search" name="arg" type="search" placeholder="Filter all captures">
         </div>
     </form>
 </div>

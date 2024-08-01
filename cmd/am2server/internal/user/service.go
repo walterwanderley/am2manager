@@ -3,10 +3,8 @@
 package user
 
 import (
-	"database/sql"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server"
@@ -14,47 +12,6 @@ import (
 
 type Service struct {
 	querier *Queries
-}
-
-func (s *Service) handleAddUser() http.HandlerFunc {
-	type request struct {
-		Name    string  `form:"name" json:"name"`
-		Email   string  `form:"email" json:"email"`
-		Status  string  `form:"status" json:"status"`
-		Picture *string `form:"picture" json:"picture"`
-	}
-	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		req, err := server.Decode[request](r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-			return
-		}
-		var arg AddUserParams
-		arg.Name = req.Name
-		arg.Email = req.Email
-		arg.Status = req.Status
-		if req.Picture != nil {
-			arg.Picture = sql.NullString{Valid: true, String: *req.Picture}
-		}
-
-		result, err := s.querier.AddUser(r.Context(), arg)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "AddUser")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
-	}
 }
 
 func (s *Service) handleContUsers() http.HandlerFunc {
@@ -68,54 +25,6 @@ func (s *Service) handleContUsers() http.HandlerFunc {
 			return
 		}
 		server.Encode(w, r, http.StatusOK, map[string]any{"value": result})
-	}
-}
-
-func (s *Service) handleGetUser() http.HandlerFunc {
-	type request struct {
-		Id int64 `form:"id" json:"id"`
-	}
-	type response struct {
-		ID        int64      `json:"id,omitempty"`
-		Email     string     `json:"email,omitempty"`
-		Name      string     `json:"name,omitempty"`
-		Status    string     `json:"status,omitempty"`
-		CreatedAt time.Time  `json:"created_at,omitempty"`
-		UpdatedAt *time.Time `json:"updated_at,omitempty"`
-		Picture   *string    `json:"picture,omitempty"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req request
-		if str := r.PathValue("id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.Id = v
-			}
-		}
-		id := req.Id
-
-		result, err := s.querier.GetUser(r.Context(), id)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "GetUser")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		var res response
-		res.ID = result.ID
-		res.Email = result.Email
-		res.Name = result.Name
-		res.Status = result.Status
-		res.CreatedAt = result.CreatedAt
-		if result.UpdatedAt.Valid {
-			res.UpdatedAt = &result.UpdatedAt.Time
-		}
-		if result.Picture.Valid {
-			res.Picture = &result.Picture.String
-		}
-		server.Encode(w, r, http.StatusOK, res)
 	}
 }
 

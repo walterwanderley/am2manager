@@ -15,7 +15,3 @@ SELECT * FROM review WHERE id = ?;
 SELECT * FROM review
 WHERE user_id = ?;
 
-/* name: ListReviewsByCapture :many */
-/* http: GET /captures/{capture_id}/reviews */
-SELECT * FROM review
-WHERE capture_id = ?;

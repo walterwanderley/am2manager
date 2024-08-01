@@ -145,6 +145,42 @@ func (q *Queries) addCapture(ctx context.Context, arg addCaptureParams) (sql.Res
 	)
 }
 
+const listReviewsByCapture = `-- name: listReviewsByCapture :many
+SELECT id, user_id, capture_id, rate, comment, created_at, updated_at FROM review
+WHERE capture_id = ?
+`
+
+func (q *Queries) listReviewsByCapture(ctx context.Context, captureID int64) ([]Review, error) {
+	rows, err := q.db.QueryContext(ctx, listReviewsByCapture, captureID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Review
+	for rows.Next() {
+		var i Review
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CaptureID,
+			&i.Rate,
+			&i.Comment,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const mostDownloadedCaptures = `-- name: mostDownloadedCaptures :many
 SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at 
 FROM capture c
@@ -264,4 +300,31 @@ func (q *Queries) totalSearchCaptures(ctx context.Context, arg sql.NullString) (
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const updateCapture = `-- name: updateCapture :execresult
+UPDATE capture SET name = ?, 
+description = ?, type = ?, has_cab = ?, demo_link = ?
+WHERE id = ?
+`
+
+type updateCaptureParams struct {
+	Name        string
+	Description sql.NullString
+	Type        string
+	HasCab      sql.NullBool
+	DemoLink    sql.NullString
+	ID          int64
+}
+
+// http: PUT /captures/{id}
+func (q *Queries) updateCapture(ctx context.Context, arg updateCaptureParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateCapture,
+		arg.Name,
+		arg.Description,
+		arg.Type,
+		arg.HasCab,
+		arg.DemoLink,
+		arg.ID,
+	)
 }

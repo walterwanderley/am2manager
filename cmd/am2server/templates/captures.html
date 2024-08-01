@@ -4,16 +4,18 @@
     <li>
         <div class="collapsible-header"><i class="material-icons">
                 {{if eq .Type "CLEAN"}}volume_mute{{else if eq .Type "CRUNCH"}}volume_down{{else}}volume_up{{end}}
-            </i><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a><span
-                class="secondary-content">
-                {{if .HasCab}}(IR){{end}}<span class="left">&nbsp;&nbsp;&nbsp;</span>Downloads: {{.Downloads}}</span>
+            </i><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a>
+            {{if .HasCab}}(IR){{end}}<span class="badge"><a href="/captures/{{.ID}}/file">
+                    <i class="material-icons">download</i></a>{{.Downloads}}</span>
         </div>
         <div class="collapsible-body"><span>{{.Description}}</span>
             <p><a href="/captures/{{.ID}}/file" class="waves-effect waves-light btn">
                     <i class="material-icons right">download</i>Download</a></p>
             {{if EmbedFrame .DemoLink}}
-            <iframe id="player_{{.ID}}" type="text/html" width="640" height="360" src="{{.DemoLink}}"
-                frameborder="0"></iframe>
+            <div class="video-container">
+                <iframe id="player_{{.ID}}" type="text/html" width="640" height="360" src="{{.DemoLink}}"
+                    frameborder="0"></iframe>
+            </div>
             {{else if .DemoLink}}
             <p>Demonstration: <a href="{{.DemoLink}}" target="_blank">{{.DemoLink}}</a></p>
             {{end}}

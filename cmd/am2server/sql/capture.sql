@@ -2,6 +2,12 @@
 INSERT INTO capture(user_id, name, description, type, has_cab, data, am2_hash, data_hash, demo_link)
 VALUES(?,?,?,?,?,?,?,?,?);
 
+/* name: updateCapture :execresult */
+/* http: PUT /captures/{id} */
+UPDATE capture SET name = ?, 
+description = ?, type = ?, has_cab = ?, demo_link = ?
+WHERE id = ?;
+
 /* name: GetCapture :one */
 /* http: GET /captures/{id} */
 SELECT * FROM capture WHERE id = ?;
@@ -40,3 +46,7 @@ LIMIT 5;
 
 /* name: protectedTrainer :one */
 SELECT * FROM protected_am2 WHERE am2_hash = ? LIMIT 1;
+
+/* name: listReviewsByCapture :many */
+SELECT * FROM review
+WHERE capture_id = ?;

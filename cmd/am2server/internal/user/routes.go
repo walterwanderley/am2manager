@@ -5,8 +5,6 @@ package user
 import "net/http"
 
 func (s *Service) RegisterHandlers(mux *http.ServeMux) {
-	mux.HandleFunc("POST /users", s.handleAddUser())
 	mux.HandleFunc("GET /users/count", s.handleContUsers())
-	mux.HandleFunc("GET /users/{id}", s.handleGetUser())
 	mux.HandleFunc("GET /users", s.handleGetUserByEmail())
 }

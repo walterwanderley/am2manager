@@ -5,6 +5,5 @@ package review
 import "net/http"
 
 func (s *Service) RegisterHandlers(mux *http.ServeMux) {
-	mux.HandleFunc("GET /captures/{capture_id}/reviews", s.handleListReviewsByCapture())
 	mux.HandleFunc("GET /users/{user_id}/reviews", s.handleListReviewsByUser())
 }

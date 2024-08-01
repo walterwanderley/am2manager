@@ -13,7 +13,7 @@
       <li><a hx-get="/find-capture" hx-push-url="true" hx-target="#main-section"><i
             class="material-icons left">search</i>Search Captures</a></li>
       {{if not LoggedIn}}<li><a href="/login"><i class="material-icons left">login</i>Sign-in</a></li>
-      {{else}}<li><a href="/logout"><img src="{{User.Picture}}" alt="{{FirstChar User.Email}}" class="circle" title="Click to logout"></a></li>{{end}}
+      {{else}}<li><a hx-get="/users/{{User.ID}}" hx-push-url="true" hx-target="#main-section"><img src="{{User.Picture}}" alt="{{FirstChar User.Email}}" class="circle responsive-img"></a></li>{{end}}
     </ul>
   </div>
 </nav>
@@ -40,5 +40,5 @@
   <li><a hx-get="/find-capture" hx-push-url="true" hx-target="#main-section"><i
         class="material-icons left">search</i>Search Captures</a></li>
   {{if not LoggedIn}}<li><a href="/login"><i class="material-icons left">login</i>Sign-in</a></li>
-  {{else}}<li><a href="/logout"><i class="material-icons left">logout</i>Sign-out</a></li>{{end}}
+  {{else}}<li><a hx-get="/users/{{User.ID}}" hx-push-url="true" hx-target="#main-section"><i class="material-icons left">face</i>Profile</a></li>{{end}}
 </ul>

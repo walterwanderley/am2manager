@@ -1,9 +1,8 @@
-/* name: AddUser :execresult */
-/* http: POST /users */
+/* name: addUser :execresult */
 INSERT INTO user(name, email, status, picture) 
 VALUES(?,?,?,?);
 
-/* name: GetUser :one */
+/* name: getUser :one */
 /* http: GET /users/{id} */
 SELECT * FROM user WHERE id = ?;
 
@@ -15,5 +14,9 @@ SELECT count(*) FROM user;
 /* http: GET /users */
 SELECT * from user WHERE email = ?;
 
+/* name: updateUserName :execresult */
+/* http: PATCH /users/{id}/name */
+UPDATE user SET name = ?, updated_at = date()  WHERE id = ?;
+
 /* name: updateUserPicture :execresult */
-UPDATE user SET picture = ?, updated_at = now()  WHERE id = ?;
+UPDATE user SET picture = ?, updated_at = date()  WHERE id = ?;

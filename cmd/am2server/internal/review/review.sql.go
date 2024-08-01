@@ -10,43 +10,6 @@ import (
 	"database/sql"
 )
 
-const listReviewsByCapture = `-- name: ListReviewsByCapture :many
-SELECT id, user_id, capture_id, rate, comment, created_at, updated_at FROM review
-WHERE capture_id = ?
-`
-
-// http: GET /captures/{capture_id}/reviews
-func (q *Queries) ListReviewsByCapture(ctx context.Context, captureID int64) ([]Review, error) {
-	rows, err := q.db.QueryContext(ctx, listReviewsByCapture, captureID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Review
-	for rows.Next() {
-		var i Review
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.CaptureID,
-			&i.Rate,
-			&i.Comment,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listReviewsByUser = `-- name: ListReviewsByUser :many
 SELECT id, user_id, capture_id, rate, comment, created_at, updated_at FROM review
 WHERE user_id = ?

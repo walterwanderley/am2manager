@@ -1,8 +1,44 @@
 {{define "content"}}
 <div class="row">
-    <div class="section no-pad-bot" id="index-banner">
+    <div class="section no-pad-bot">
         <div class="container">
-            <br><br>
+            <div class="row">
+                {{if not User.Logged}}
+                <p class="center"><a href="/login"><i class="material-icons center">login</i> SignIn</a> to write a comment and rate this capture.</p>
+                {{else}}
+                <form hx-post="/reviews" hx-target="#messages">
+                    <input type="hidden" name="capture_id" value="{{.ID}}">
+                    <div class="row">
+
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <textarea id="comment" name="comment" class="materialize-textarea" rows="5"></textarea>
+                            <label for="comment">Comment</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col s6 rate">
+                            <input type="radio" id="star5" name="rate" value="5" />
+                            <label for="star5" title="text">5 stars</label>
+                            <input type="radio" id="star4" name="rate" value="4" />
+                            <label for="star4" title="text">4 stars</label>
+                            <input type="radio" id="star3" name="rate" value="3" />
+                            <label for="star3" title="text">3 stars</label>
+                            <input type="radio" id="star2" name="rate" value="2" />
+                            <label for="star2" title="text">2 stars</label>
+                            <input type="radio" id="star1" name="rate" value="1" />
+                            <label for="star1" title="text">1 star</label>
+                        </div>
+                        <div class="col s6">
+                            <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+                                <i class="material-icons right">send</i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {{end}}
+            </div>
             <h3 class="header center orange-text">{{.Name}}</h3>
             <div class="row center">
                 <a href="/captures/{{.ID}}/file" class="waves-effect waves-light btn"><i
@@ -10,16 +46,65 @@
             </div>
             <div class="row center">
                 <p>Downloads Count: {{.Downloads}}</p>
-                <p>Type: {{.Type}}</p>
-                {{if .HasCab}}<p>With Cabinet Simulator (IR)</p>{{end}}
             </div>
             <div class="row center">
+                {{if User.CanEdit .ID}}
+                <form hx-patch="/captures/{{.ID}}" hx-target="#messages">
+                    <div class="row">
+                        <div class="input-field col s6">
+                            <input id="name" name="name" type="text" maxlength="100" value="{{.Name}}" required>
+                            <label {{if .Name}}class="active" {{end}} for="name">Name</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <textarea id="description" name="description" class="materialize-textarea"
+                                rows="5">{{.Description}}</textarea>
+                            <label {{if .Description}}class="active" {{end}} for="decription">Capture
+                                Description</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col s3">
+                            <select name="type">
+                                <option value="CLEAN" {{if eq .Type "CLEAN" }}selected{{end}}>Clean</option>
+                                <option value="CRUNCH" {{if eq .Type "CRUNCH" }}selected{{end}}>Crunch</option>
+                                <option value="HI-GAIN" {{if eq .Type "HI-GAIN" }}selected{{end}}>Hi-Gain</option>
+                            </select>
+                            <label>Type</label>
+                        </div>
+                        <div class="input-field col s6">
+                            <input id="demo_link" name="demo_link" type="text" maxlength="200" value="{{.DemoLink}}">
+                            <label {{if .DemoLink}}class="active" {{end}} for="demo_link">Youtube embed link or
+                                capture audio demo</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <p>
+                            <label>
+                                <input type="checkbox" name="has_cab" {{if .HasCab}}checked{{end}} />
+                                <span>With Cabinet Simulator (IR)</span>
+                            </label>
+                        </p>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit" name="action">Save
+                        <i class="material-icons right">save</i>
+                    </button>
+                </form>
+                {{else}}
+                <div class="row center">
+                    <p>Type: {{.Type}}</p>
+                    {{if .HasCab}}<p>With Cabinet Simulator (IR)</p>{{end}}
+                </div>
                 <h5 class="header col s12 light">{{.Description}}</h5>
+                {{end}}
             </div>
             <div class="row center">
                 {{if EmbedFrame .DemoLink}}
-                <iframe id="player_{{.ID}}" type="text/html" width="640" height="360" src="{{.DemoLink}}"
-                    frameborder="0"></iframe>
+                <div class="video-container">
+                    <iframe id="player_{{.ID}}" type="text/html" width="640" height="360" src="{{.DemoLink}}"
+                        frameborder="0"></iframe>
+                </div>
                 {{else if .DemoLink}}
                 <p>Demonstration: <a href="{{.DemoLink}}" target="_blank">{{.DemoLink}}</a></p>
                 {{end}}
@@ -27,6 +112,30 @@
                         hx-push-url="true">Search captures with same trained data</a></p>
             </div>
             <br><br>
+            <hr />
+
+            <div class="row">
+                <a name="comments"></a>
+                <h5>Comments</h5>
+                {{if not .Reviews}}<p>no comments found.</p>
+                {{else}}
+                <table>
+                    <thead>
+                        <td>Comment</td>
+                        <td>Rate</td>
+                    </thead>
+                    <tbody>
+                        {{range .Reviews}}
+                        <tr>
+                            <td>{{.Comment.String}}</td>
+                            <td>{{.Rate}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{end}}
+            </div>
+
         </div>
     </div>
 </div>

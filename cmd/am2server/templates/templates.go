@@ -41,6 +41,8 @@ var (
 	Commit, Version string
 
 	provider templatesProvider
+
+	adminMail = os.Getenv("ADMIN")
 )
 
 type User struct {
@@ -52,6 +54,17 @@ type User struct {
 
 func (u User) Logged() bool {
 	return u.ID > 0
+}
+
+func (u User) Admin() bool {
+	return u.Logged() && u.Email == adminMail
+}
+
+func (u User) CanEdit(resouceOwner int64) bool {
+	if u.Admin() {
+		return true
+	}
+	return u.Logged() && u.ID == resouceOwner
 }
 
 type Pagination struct {
@@ -353,7 +366,9 @@ func contextTemplates(r *http.Request) []string {
 	if path == "" {
 		path = "index"
 	}
-	path = path + ".html"
+	if !strings.HasSuffix(path, ".html") {
+		path = path + ".html"
+	}
 	f, err := provider.TemplatesFS().Open(path)
 	if err == nil {
 		templates = append(templates, path)

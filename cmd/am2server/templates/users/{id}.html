@@ -1,0 +1,21 @@
+{{define "content"}}
+<div class="row">
+    <h4 class="header col s12 light">Profile</h4>
+</div>
+<div class="row">
+    <img class="responsive-img" src="{{.Picture}}" alt="{{.Email}}"/>
+    <br>
+    <form class="col s12" hx-patch="/users/{{.ID}}/name" hx-target="#messages">
+        <div class="row">            
+            <div class="input-field col s6">
+                <input id="name" name="name" type="text" maxlength="200" value="{{.Name}}" placeholder="Name" required>
+                <label {{if .Name}}class="active"{{end}} for="name">Name</label>
+            </div>
+        </div>
+        <button class="btn waves-effect waves-light" type="submit" name="action">Save
+            <i class="material-icons right">save</i>
+        </button>
+        <a class="btn" href="/logout"><i class="material-icons">logout</i>Logout</a>
+    </form>
+</div>
+{{end}}

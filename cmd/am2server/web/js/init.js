@@ -20,6 +20,10 @@ function loadComponents(content) {
     $('.materialert .close-alert').click(function () {
         $(this).parent().hide('slow');
     });
+
+    $(document).ready(function () {
+        $('.tabs').tabs();
+    });
 }
 
 function replacePathParams(event) {
@@ -93,6 +97,6 @@ function onSignIn(googleUser) {
 function signOut() {
     var auth2 = gapi.auth2.getAuthInstance();
     auth2.signOut().then(function () {
-      console.log('User signed out.');
+        console.log('User signed out.');
     });
-  }
+}

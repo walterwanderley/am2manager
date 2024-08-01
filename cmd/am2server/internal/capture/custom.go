@@ -28,6 +28,7 @@ func (s *CustomService) RegisterHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("GET /captures/{id}/file", s.handleGetCaptureFile())
 	mux.HandleFunc("GET /captures", s.handleSearchCaptures())
 	mux.HandleFunc("GET /captures/{id}", s.handleGetCapture())
+	mux.HandleFunc("PATCH /captures/{id}", s.handleUpdateCapture())
 }
 
 func (s *CustomService) handleGetCapture() http.HandlerFunc {
@@ -35,19 +36,22 @@ func (s *CustomService) handleGetCapture() http.HandlerFunc {
 		Id int64 `form:"id" json:"id"`
 	}
 	type response struct {
-		ID          int64      `json:"id,omitempty"`
-		UserID      *int64     `json:"user_id,omitempty"`
-		Name        string     `json:"name,omitempty"`
-		Description *string    `json:"description,omitempty"`
-		Type        string     `json:"type,omitempty"`
-		HasCab      *bool      `json:"has_cab,omitempty"`
-		Am2Hash     string     `json:"am2_hash,omitempty"`
-		DataHash    string     `json:"data_hash,omitempty"`
-		Data        []byte     `json:"data,omitempty"`
-		DemoLink    string     `json:"demo_link,omitempty"`
-		Downloads   int64      `json:"downloads,omitempty"`
-		CreatedAt   time.Time  `json:"created_at,omitempty"`
-		UpdatedAt   *time.Time `json:"updated_at,omitempty"`
+		ID                int64      `json:"id,omitempty"`
+		UserID            *int64     `json:"user_id,omitempty"`
+		Name              string     `json:"name,omitempty"`
+		Description       *string    `json:"description,omitempty"`
+		Type              string     `json:"type,omitempty"`
+		HasCab            *bool      `json:"has_cab,omitempty"`
+		Am2Hash           string     `json:"am2_hash,omitempty"`
+		DataHash          string     `json:"data_hash,omitempty"`
+		Data              []byte     `json:"data,omitempty"`
+		DemoLink          string     `json:"demo_link,omitempty"`
+		Downloads         int64      `json:"downloads,omitempty"`
+		CreatedAt         time.Time  `json:"created_at,omitempty"`
+		UpdatedAt         *time.Time `json:"updated_at,omitempty"`
+		CurrentUserReview *Review    `json:"-"`
+		Reviews           []Review   `json:"-"`
+		ReviewsRate       float64    `json:"reviews_rate, omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +94,25 @@ func (s *CustomService) handleGetCapture() http.HandlerFunc {
 		res.CreatedAt = result.CreatedAt
 		if result.UpdatedAt.Valid {
 			res.UpdatedAt = &result.UpdatedAt.Time
+		}
+
+		user := templates.UserFromContext(r.Context())
+		if user.Logged() {
+			//TODO load current user review
+		}
+
+		res.Reviews, err = s.querier.listReviewsByCapture(r.Context(), res.ID)
+		if err != nil {
+			slog.Error("sql call failed", "error", err, "method", "ListReviewsByCapture")
+			htmx.Error(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if total := len(res.Reviews); total > 0 {
+			var sum int64
+			for _, review := range res.Reviews {
+				sum += review.Rate
+			}
+			res.ReviewsRate = float64(sum) / float64(total)
 		}
 		server.Encode(w, r, http.StatusOK, res)
 	}
@@ -255,7 +278,7 @@ func (s *CustomService) handleAddCapture() http.HandlerFunc {
 		}
 		defer file.Close()
 		if arg.Name == "" {
-			arg.Name = handler.Filename
+			arg.Name = toFriendlyName(handler.Filename)
 		}
 
 		if len(arg.Name) > 200 {
@@ -421,10 +444,75 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 	}
 }
 
+func (s *CustomService) handleUpdateCapture() http.HandlerFunc {
+	type request struct {
+		Name        string  `form:"name" json:"name"`
+		Description *string `form:"description" json:"description"`
+		Type        string  `form:"type" json:"type"`
+		HasCab      *bool   `form:"has_cab" json:"has_cab"`
+		DemoLink    *string `form:"demo_link" json:"demo_link"`
+		ID          int64   `form:"id" json:"id"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req, err := server.Decode[request](r)
+		if err != nil {
+			htmx.Error(w, r, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+		if str := r.PathValue("id"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadRequest, err.Error())
+				return
+			} else {
+				req.ID = v
+			}
+		}
+
+		var arg updateCaptureParams
+		arg.Name = req.Name
+		if req.Description != nil {
+			arg.Description = sql.NullString{Valid: true, String: *req.Description}
+		}
+		arg.Type = req.Type
+		if req.HasCab != nil {
+			arg.HasCab = sql.NullBool{Valid: true, Bool: *req.HasCab}
+		}
+		if req.DemoLink != nil {
+			arg.DemoLink = sql.NullString{Valid: true, String: *req.DemoLink}
+		}
+		arg.ID = req.ID
+
+		user := templates.UserFromContext(r.Context())
+		if !user.CanEdit(arg.ID) {
+			htmx.Error(w, r, http.StatusForbidden, "Forbidden")
+			return
+		}
+
+		_, err = s.querier.updateCapture(r.Context(), arg)
+		if err != nil {
+			slog.Error("sql call failed", "error", err, "method", "UpdateCapture")
+			htmx.Error(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		htmx.Toast(w, r, http.StatusOK, "Capture updated")
+	}
+}
+
 func toAm2DataExtension(filename string) string {
+	filename = strings.ReplaceAll(filename, " ", "_")
 	i := strings.LastIndex(filename, ".")
 	if i < 0 {
 		return filename + ".am2data"
 	}
 	return filename[0:i] + ".am2data"
+}
+
+func toFriendlyName(filename string) string {
+	filename = strings.ReplaceAll(filename, "_", " ")
+	i := strings.LastIndex(filename, ".")
+	if i > 1 {
+		return filename[0:i]
+	}
+	return filename
 }

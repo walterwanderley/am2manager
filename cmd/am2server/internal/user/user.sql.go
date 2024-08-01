@@ -10,28 +10,6 @@ import (
 	"database/sql"
 )
 
-const addUser = `-- name: AddUser :execresult
-INSERT INTO user(name, email, status, picture) 
-VALUES(?,?,?,?)
-`
-
-type AddUserParams struct {
-	Name    string
-	Email   string
-	Status  string
-	Picture sql.NullString
-}
-
-// http: POST /users
-func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, addUser,
-		arg.Name,
-		arg.Email,
-		arg.Status,
-		arg.Picture,
-	)
-}
-
 const contUsers = `-- name: ContUsers :one
 SELECT count(*) FROM user
 `
@@ -42,26 +20,6 @@ func (q *Queries) ContUsers(ctx context.Context) (int64, error) {
 	var count int64
 	err := row.Scan(&count)
 	return count, err
-}
-
-const getUser = `-- name: GetUser :one
-SELECT id, email, name, status, created_at, updated_at, picture FROM user WHERE id = ?
-`
-
-// http: GET /users/{id}
-func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUser, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Name,
-		&i.Status,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Picture,
-	)
-	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -84,8 +42,63 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
+const addUser = `-- name: addUser :execresult
+INSERT INTO user(name, email, status, picture) 
+VALUES(?,?,?,?)
+`
+
+type addUserParams struct {
+	Name    string
+	Email   string
+	Status  string
+	Picture sql.NullString
+}
+
+func (q *Queries) addUser(ctx context.Context, arg addUserParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, addUser,
+		arg.Name,
+		arg.Email,
+		arg.Status,
+		arg.Picture,
+	)
+}
+
+const getUser = `-- name: getUser :one
+SELECT id, email, name, status, created_at, updated_at, picture FROM user WHERE id = ?
+`
+
+// http: GET /users/{id}
+func (q *Queries) getUser(ctx context.Context, id int64) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Picture,
+	)
+	return i, err
+}
+
+const updateUserName = `-- name: updateUserName :execresult
+UPDATE user SET name = ?, updated_at = date()  WHERE id = ?
+`
+
+type updateUserNameParams struct {
+	Name string
+	ID   int64
+}
+
+// http: PATCH /users/{id}/name
+func (q *Queries) updateUserName(ctx context.Context, arg updateUserNameParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateUserName, arg.Name, arg.ID)
+}
+
 const updateUserPicture = `-- name: updateUserPicture :execresult
-UPDATE user SET picture = ?, updated_at = now()  WHERE id = ?
+UPDATE user SET picture = ?, updated_at = date()  WHERE id = ?
 `
 
 type updateUserPictureParams struct {

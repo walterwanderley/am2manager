@@ -15,11 +15,11 @@ tags:
   
   
 paths:
-  /captures/{id}:
+  /captures/{capture_id}/reviews:
       get:
           parameters:
               - in: path
-                name: id
+                name: capture_id
                 schema:
                   format: int64
                   type: integer
@@ -28,7 +28,9 @@ paths:
                   content:
                       application/json:
                           schema:
-                              $ref: '#/components/schemas/captureCustomCapture'
+                              items:
+                                  $ref: '#/components/schemas/reviewReview'
+                              type: array
                   description: OK
               default:
                   content:
@@ -36,7 +38,68 @@ paths:
                           schema:
                               type: string
                   description: Error message
-          summary: GetCapture
+          summary: ListReviewsByCapture
+          tags:
+              - review
+  /captures/{id}:
+      patch:
+          parameters:
+              - in: path
+                name: id
+                schema:
+                  format: int64
+                  type: integer
+          requestBody:
+              content:
+                  application/json:
+                      schema:
+                          properties:
+                              demo_link:
+                                  type: string
+                              description:
+                                  type: string
+                              has_cab:
+                                  type: boolean
+                              name:
+                                  type: string
+                              type:
+                                  type: string
+                          type: object
+                  application/x-www-form-urlencoded:
+                      schema:
+                          properties:
+                              demo_link:
+                                  type: string
+                              description:
+                                  type: string
+                              has_cab:
+                                  type: boolean
+                              name:
+                                  type: string
+                              type:
+                                  type: string
+                          type: object
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              properties:
+                                  last_insert_id:
+                                      format: int64
+                                      type: integer
+                                  rows_affected:
+                                      format: int64
+                                      type: integer
+                              type: object
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: UpdateCapture
           tags:
               - capture
   /captures/{id}/file:
@@ -152,6 +215,75 @@ paths:
           summary: RemoveReview
           tags:
               - review
+  /users/{id}:
+      get:
+          parameters:
+              - in: path
+                name: id
+                schema:
+                  format: int64
+                  type: integer
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              $ref: '#/components/schemas/userUser'
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: GetUser
+          tags:
+              - user
+  /users/{id}/name:
+      patch:
+          parameters:
+              - in: path
+                name: id
+                schema:
+                  format: int64
+                  type: integer
+          requestBody:
+              content:
+                  application/json:
+                      schema:
+                          properties:
+                              name:
+                                  type: string
+                          type: object
+                  application/x-www-form-urlencoded:
+                      schema:
+                          properties:
+                              name:
+                                  type: string
+                          type: object
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              properties:
+                                  last_insert_id:
+                                      format: int64
+                                      type: integer
+                                  rows_affected:
+                                      format: int64
+                                      type: integer
+                              type: object
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: UpdateUserName
+          tags:
+              - user
   
   /captures:
     get:
@@ -239,37 +371,6 @@ paths:
               schema:
                 type: string  
     
-  /captures/{capture_id}/reviews:
-    get:
-      summary: ListReviewsByCapture
-      tags:
-          - review
-      
-      
-      parameters:
-        - name: capture_id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/reviewReview"
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
   /users/{user_id}/reviews:
     get:
       summary: ListReviewsByUser
@@ -302,60 +403,6 @@ paths:
                 type: string  
     
   /users:
-    post:
-      summary: AddUser
-      tags:
-          - user
-      
-      
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-                status:
-                  type: string
-                picture:
-                  type: string
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-                status:
-                  type: string
-                picture:
-                  type: string
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  last_insert_id:
-                    type: integer
-                    format: int64
-                  rows_affected:
-                    type: integer
-                    format: int64
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
     get:
       summary: GetUserByEmail
       tags:
@@ -397,35 +444,6 @@ paths:
           content:
             application/json:
               schema:
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
-  /users/{id}:
-    get:
-      summary: GetUser
-      tags:
-          - user
-      
-      
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/userUser"
           
         "default":    
           description: Error message

@@ -1,3 +1,4 @@
 # flyctl launch added from .gitignore
 **/test.db*
 fly.toml
+litestream.yml
