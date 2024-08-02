@@ -31,7 +31,7 @@
                             <label for="star1" title="text">1 star</label>
                         </div>
                         <div class="col s6">
-                            <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+                            <button class="btn waves-effect waves-light" type="submit" name="action">Send
                                 <i class="material-icons right">send</i>
                             </button>
                         </div>
@@ -115,20 +115,22 @@
             <hr />
 
             <div class="row">
-                <a name="comments"></a>
-                <h5>Comments</h5>
+                <a name="reviews"></a>
+                <h5>Reviews</h5>
                 {{if not .Reviews}}<p>no comments found.</p>
-                {{else}}
+                {{else}}                
                 <table>
                     <thead>
                         <td>Comment</td>
-                        <td>Rate</td>
+                        <td>Rate{{if gt .Rate 0.0}}: {{.Rate}}{{end}}</td>
+                        <td></td>
                     </thead>
                     <tbody>
                         {{range .Reviews}}
-                        <tr>
+                        <tr id="review_{{.ID}}">
                             <td>{{.Comment.String}}</td>
                             <td>{{.Rate}}</td>
+                            <td>{{if User.CanEdit .ID}}<a href="#" hx-delete="/reviews/{{.ID}}" hx-target="#review_{{.ID}}"><i class="material-icons">delete</i></a>{{end}}</td>
                         </tr>
                         {{end}}
                     </tbody>

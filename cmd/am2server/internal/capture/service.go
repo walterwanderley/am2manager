@@ -31,6 +31,7 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 		Type        string    `json:"type,omitempty"`
 		CreatedAt   time.Time `json:"created_at,omitempty"`
 		DemoLink    *string   `json:"demo_link,omitempty"`
+		Rate        *float64  `json:"rate,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +84,9 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 			item.CreatedAt = r.CreatedAt
 			if r.DemoLink.Valid {
 				item.DemoLink = &r.DemoLink.String
+			}
+			if r.Rate.Valid {
+				item.Rate = &r.Rate.Float64
 			}
 			res = append(res, item)
 		}

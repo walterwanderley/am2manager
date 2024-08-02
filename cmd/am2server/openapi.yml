@@ -452,6 +452,137 @@ paths:
               schema:
                 type: string  
     
+  /users/{user_id}/captures:
+    get:
+      summary: ListFavoriteCaptures
+      tags:
+          - user
+      
+      
+      parameters:
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/userListFavoriteCapturesRow"
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
+  /users/{user_id}/captures/{capture_id}:
+    post:
+      summary: AddFavoriteCapture
+      tags:
+          - user
+      
+      
+      parameters:
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+        - name: capture_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    delete:
+      summary: RemoveFavoriteCapture
+      tags:
+          - user
+      
+      
+      parameters:
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+        - name: capture_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_insert_id:
+                    type: integer
+                    format: int64
+                  rows_affected:
+                    type: integer
+                    format: int64
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
   
 components:
   schemas:
@@ -527,6 +658,9 @@ components:
           format: date-time
         demo_link:
           type: string
+        rate:
+          type: number
+          format: double
     reviewReview:
       type: object
       properties:
@@ -550,6 +684,28 @@ components:
         updated_at:
           type: string
           format: date-time
+    userListFavoriteCapturesRow:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        downloads:
+          type: integer
+          format: int64
+        has_cab:
+          type: boolean
+        type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        demo_link:
+          type: string
     userUser:
       type: object
       properties:

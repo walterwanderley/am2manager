@@ -20,3 +20,25 @@ UPDATE user SET name = ?, updated_at = date()  WHERE id = ?;
 
 /* name: updateUserPicture :execresult */
 UPDATE user SET picture = ?, updated_at = date()  WHERE id = ?;
+
+/* name: AddFavoriteCapture :execresult */
+/* http: POST /users/{user_id}/captures/{capture_id} */
+INSERT INTO user_favorite(user_id, capture_id) VALUES(?,?);
+
+/* name: RemoveFavoriteCapture :execresult */
+/* http: DELETE /users/{user_id}/captures/{capture_id} */
+DELETE FROM user_favorite WHERE user_id = ? AND capture_id = ?;
+
+/* name: getFavoriteCapture :one */
+/* http: GET /users/{user_id}/captures/{capture_id} */
+SELECT *
+FROM user_favorite
+WHERE user_id = ? AND capture_id = ?;
+
+/* name: ListFavoriteCaptures :many */
+/* http: GET /users/{user_id}/captures */
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link
+FROM user_favorite uf, capture c
+WHERE uf.capture_id = c.id AND uf.user_id = ?
+ORDER BY uf.created_at DESC
+LIMIT ? OFFSET ?;

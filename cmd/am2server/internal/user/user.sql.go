@@ -8,7 +8,22 @@ package user
 import (
 	"context"
 	"database/sql"
+	"time"
 )
+
+const addFavoriteCapture = `-- name: AddFavoriteCapture :execresult
+INSERT INTO user_favorite(user_id, capture_id) VALUES(?,?)
+`
+
+type AddFavoriteCaptureParams struct {
+	UserID    int64
+	CaptureID int64
+}
+
+// http: POST /users/{user_id}/captures/{capture_id}
+func (q *Queries) AddFavoriteCapture(ctx context.Context, arg AddFavoriteCaptureParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, addFavoriteCapture, arg.UserID, arg.CaptureID)
+}
 
 const contUsers = `-- name: ContUsers :one
 SELECT count(*) FROM user
@@ -42,6 +57,78 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
+const listFavoriteCaptures = `-- name: ListFavoriteCaptures :many
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link
+FROM user_favorite uf, capture c
+WHERE uf.capture_id = c.id AND uf.user_id = ?
+ORDER BY uf.created_at DESC
+LIMIT ? OFFSET ?
+`
+
+type ListFavoriteCapturesParams struct {
+	UserID int64
+	Limit  int64
+	Offset int64
+}
+
+type ListFavoriteCapturesRow struct {
+	ID          int64
+	Name        string
+	Description sql.NullString
+	Downloads   int64
+	HasCab      sql.NullBool
+	Type        string
+	CreatedAt   time.Time
+	DemoLink    sql.NullString
+}
+
+// http: GET /users/{user_id}/captures
+func (q *Queries) ListFavoriteCaptures(ctx context.Context, arg ListFavoriteCapturesParams) ([]ListFavoriteCapturesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listFavoriteCaptures, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListFavoriteCapturesRow
+	for rows.Next() {
+		var i ListFavoriteCapturesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Downloads,
+			&i.HasCab,
+			&i.Type,
+			&i.CreatedAt,
+			&i.DemoLink,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removeFavoriteCapture = `-- name: RemoveFavoriteCapture :execresult
+DELETE FROM user_favorite WHERE user_id = ? AND capture_id = ?
+`
+
+type RemoveFavoriteCaptureParams struct {
+	UserID    int64
+	CaptureID int64
+}
+
+// http: DELETE /users/{user_id}/captures/{capture_id}
+func (q *Queries) RemoveFavoriteCapture(ctx context.Context, arg RemoveFavoriteCaptureParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, removeFavoriteCapture, arg.UserID, arg.CaptureID)
+}
+
 const addUser = `-- name: addUser :execresult
 INSERT INTO user(name, email, status, picture) 
 VALUES(?,?,?,?)
@@ -61,6 +148,25 @@ func (q *Queries) addUser(ctx context.Context, arg addUserParams) (sql.Result, e
 		arg.Status,
 		arg.Picture,
 	)
+}
+
+const getFavoriteCapture = `-- name: getFavoriteCapture :one
+SELECT user_id, capture_id, created_at
+FROM user_favorite
+WHERE user_id = ? AND capture_id = ?
+`
+
+type getFavoriteCaptureParams struct {
+	UserID    int64
+	CaptureID int64
+}
+
+// http: GET /users/{user_id}/captures/{capture_id}
+func (q *Queries) getFavoriteCapture(ctx context.Context, arg getFavoriteCaptureParams) (UserFavorite, error) {
+	row := q.db.QueryRowContext(ctx, getFavoriteCapture, arg.UserID, arg.CaptureID)
+	var i UserFavorite
+	err := row.Scan(&i.UserID, &i.CaptureID, &i.CreatedAt)
+	return i, err
 }
 
 const getUser = `-- name: getUser :one

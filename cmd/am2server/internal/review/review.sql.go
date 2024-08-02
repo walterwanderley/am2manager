@@ -69,6 +69,22 @@ func (q *Queries) addReview(ctx context.Context, arg addReviewParams) (sql.Resul
 	)
 }
 
+const existsReviewByUserCapture = `-- name: existsReviewByUserCapture :one
+SELECT COUNT(*) FROM review WHERE user_id = ? AND capture_id = ?
+`
+
+type existsReviewByUserCaptureParams struct {
+	UserID    sql.NullInt64
+	CaptureID int64
+}
+
+func (q *Queries) existsReviewByUserCapture(ctx context.Context, arg existsReviewByUserCaptureParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, existsReviewByUserCapture, arg.UserID, arg.CaptureID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getReview = `-- name: getReview :one
 SELECT id, user_id, capture_id, rate, comment, created_at, updated_at FROM review WHERE id = ?
 `

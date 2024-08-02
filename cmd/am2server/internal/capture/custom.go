@@ -36,22 +36,21 @@ func (s *CustomService) handleGetCapture() http.HandlerFunc {
 		Id int64 `form:"id" json:"id"`
 	}
 	type response struct {
-		ID                int64      `json:"id,omitempty"`
-		UserID            *int64     `json:"user_id,omitempty"`
-		Name              string     `json:"name,omitempty"`
-		Description       *string    `json:"description,omitempty"`
-		Type              string     `json:"type,omitempty"`
-		HasCab            *bool      `json:"has_cab,omitempty"`
-		Am2Hash           string     `json:"am2_hash,omitempty"`
-		DataHash          string     `json:"data_hash,omitempty"`
-		Data              []byte     `json:"data,omitempty"`
-		DemoLink          string     `json:"demo_link,omitempty"`
-		Downloads         int64      `json:"downloads,omitempty"`
-		CreatedAt         time.Time  `json:"created_at,omitempty"`
-		UpdatedAt         *time.Time `json:"updated_at,omitempty"`
-		CurrentUserReview *Review    `json:"-"`
-		Reviews           []Review   `json:"-"`
-		ReviewsRate       float64    `json:"reviews_rate, omitempty"`
+		ID          int64      `json:"id,omitempty"`
+		UserID      *int64     `json:"user_id,omitempty"`
+		Name        string     `json:"name,omitempty"`
+		Description *string    `json:"description,omitempty"`
+		Type        string     `json:"type,omitempty"`
+		HasCab      *bool      `json:"has_cab,omitempty"`
+		Am2Hash     string     `json:"am2_hash,omitempty"`
+		DataHash    string     `json:"data_hash,omitempty"`
+		Data        []byte     `json:"data,omitempty"`
+		DemoLink    string     `json:"demo_link,omitempty"`
+		Downloads   int64      `json:"downloads,omitempty"`
+		CreatedAt   time.Time  `json:"created_at,omitempty"`
+		UpdatedAt   *time.Time `json:"updated_at,omitempty"`
+		Rate        float64    `json:"rate,omitempty"`
+		Reviews     []Review   `json:"-"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -96,11 +95,6 @@ func (s *CustomService) handleGetCapture() http.HandlerFunc {
 			res.UpdatedAt = &result.UpdatedAt.Time
 		}
 
-		user := templates.UserFromContext(r.Context())
-		if user.Logged() {
-			//TODO load current user review
-		}
-
 		res.Reviews, err = s.querier.listReviewsByCapture(r.Context(), res.ID)
 		if err != nil {
 			slog.Error("sql call failed", "error", err, "method", "ListReviewsByCapture")
@@ -112,7 +106,7 @@ func (s *CustomService) handleGetCapture() http.HandlerFunc {
 			for _, review := range res.Reviews {
 				sum += review.Rate
 			}
-			res.ReviewsRate = float64(sum) / float64(total)
+			res.Rate = float64(sum) / float64(total)
 		}
 		server.Encode(w, r, http.StatusOK, res)
 	}
@@ -377,6 +371,7 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 		HasCab      *bool     `json:"has_cab,omitempty"`
 		Type        string    `json:"type,omitempty"`
 		DemoLink    string    `json:"demo_link,omitempty"`
+		Rate        float64   `json:"rate,omitempty"`
 		CreatedAt   time.Time `json:"created_at,omitempty"`
 	}
 
@@ -438,6 +433,9 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			item.Type = r.Type
 			item.CreatedAt = r.CreatedAt
 			item.DemoLink = r.DemoLink.String
+			if r.Rate.Valid {
+				item.Rate = r.Rate.Float64
+			}
 			res = append(res, item)
 		}
 		server.Encode(w, r, http.StatusOK, res)

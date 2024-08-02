@@ -35,7 +35,7 @@ func (s *CustomService) handleAddReview() http.HandlerFunc {
 		}
 		user := templates.UserFromContext(r.Context())
 		if !user.Logged() {
-			http.Error(w, "Sign-in to write a review", http.StatusUnauthorized)
+			htmx.Toast(w, r, http.StatusUnauthorized, "Sign-in to write a review")
 			return
 		}
 		var arg addReviewParams
@@ -47,10 +47,30 @@ func (s *CustomService) handleAddReview() http.HandlerFunc {
 			arg.Comment = sql.NullString{Valid: true, String: *req.Comment}
 		}
 
+		if arg.Rate < 0 || arg.Rate > 5 {
+			htmx.Toast(w, r, http.StatusBadRequest, "Invalid rate")
+			return
+		}
+
+		count, err := s.querier.existsReviewByUserCapture(r.Context(), existsReviewByUserCaptureParams{
+			UserID:    arg.UserID,
+			CaptureID: arg.CaptureID,
+		})
+		if err != nil {
+			slog.Error("sql call failed", "error", err, "method", "existsReviewByUserCapture")
+			htmx.Toast(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		if count > 0 {
+			htmx.Toast(w, r, http.StatusBadRequest, "Dulicated review")
+			return
+		}
+
 		_, err = s.querier.addReview(r.Context(), arg)
 		if err != nil {
 			slog.Error("sql call failed", "error", err, "method", "AddReview")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			htmx.Toast(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		htmx.Toast(w, r, http.StatusOK, "Review created")
@@ -75,14 +95,14 @@ func (s *CustomService) handleRemoveReview() http.HandlerFunc {
 
 		user := templates.UserFromContext(r.Context())
 		if !user.CanEdit(id) {
-			http.Error(w, "Sign-in to remove a review", http.StatusForbidden)
+			htmx.Toast(w, r, http.StatusForbidden, "Sign-in to remove a review")
 			return
 		}
 
 		_, err := s.querier.removeReview(r.Context(), id)
 		if err != nil {
 			slog.Error("sql call failed", "error", err, "method", "RemoveReview")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			htmx.Toast(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 

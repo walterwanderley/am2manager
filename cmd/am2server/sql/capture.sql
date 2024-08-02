@@ -19,11 +19,12 @@ RETURNING data, name;
 
 /* name: SearchCaptures :many */
 /* http: GET /captures */
-SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link 
-FROM capture c
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link, AVG(r.rate) rate
+FROM capture c LEFT OUTER JOIN review r ON (c.id = r.capture_id)
 WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
 OR c.data_hash = sqlc.arg('arg') OR c.am2_hash = sqlc.arg('arg')
-ORDER BY c.downloads DESC
+GROUP BY c.id
+ORDER BY rate DESC, c.downloads DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 /* name: totalSearchCaptures :one */
@@ -50,3 +51,6 @@ SELECT * FROM protected_am2 WHERE am2_hash = ? LIMIT 1;
 /* name: listReviewsByCapture :many */
 SELECT * FROM review
 WHERE capture_id = ?;
+
+/* name: rateByCapture :one */
+SELECT AVG(rate) FROM review WHERE capture_id = ?;

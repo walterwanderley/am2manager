@@ -56,11 +56,12 @@ func (q *Queries) GetCaptureFile(ctx context.Context, id int64) (GetCaptureFileR
 }
 
 const searchCaptures = `-- name: SearchCaptures :many
-SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link 
-FROM capture c
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link, AVG(r.rate) rate
+FROM capture c LEFT OUTER JOIN review r ON (c.id = r.capture_id)
 WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
 OR c.data_hash = ?1 OR c.am2_hash = ?1
-ORDER BY c.downloads DESC
+GROUP BY c.id
+ORDER BY rate DESC, c.downloads DESC
 LIMIT ?3 OFFSET ?2
 `
 
@@ -79,6 +80,7 @@ type SearchCapturesRow struct {
 	Type        string
 	CreatedAt   time.Time
 	DemoLink    sql.NullString
+	Rate        sql.NullFloat64
 }
 
 // http: GET /captures
@@ -100,6 +102,7 @@ func (q *Queries) SearchCaptures(ctx context.Context, arg SearchCapturesParams) 
 			&i.Type,
 			&i.CreatedAt,
 			&i.DemoLink,
+			&i.Rate,
 		); err != nil {
 			return nil, err
 		}
@@ -286,6 +289,17 @@ func (q *Queries) protectedTrainer(ctx context.Context, am2Hash string) (Protect
 	var i ProtectedAm2
 	err := row.Scan(&i.Am2Hash, &i.Ref, &i.CreatedAt)
 	return i, err
+}
+
+const rateByCapture = `-- name: rateByCapture :one
+SELECT AVG(rate) FROM review WHERE capture_id = ?
+`
+
+func (q *Queries) rateByCapture(ctx context.Context, captureID int64) (sql.NullFloat64, error) {
+	row := q.db.QueryRowContext(ctx, rateByCapture, captureID)
+	var avg sql.NullFloat64
+	err := row.Scan(&avg)
+	return avg, err
 }
 
 const totalSearchCaptures = `-- name: totalSearchCaptures :one

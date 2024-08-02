@@ -15,3 +15,5 @@ SELECT * FROM review WHERE id = ?;
 SELECT * FROM review
 WHERE user_id = ?;
 
+/* name: existsReviewByUserCapture :one */
+SELECT COUNT(*) FROM review WHERE user_id = ? AND capture_id = ?;
