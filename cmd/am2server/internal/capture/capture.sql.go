@@ -56,17 +56,20 @@ func (q *Queries) GetCaptureFile(ctx context.Context, id int64) (GetCaptureFileR
 }
 
 const searchCaptures = `-- name: SearchCaptures :many
-SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link, AVG(r.rate) rate
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link, AVG(r.rate) rate, uf.user_id fav
 FROM capture c LEFT OUTER JOIN review r ON (c.id = r.capture_id)
+LEFT OUTER JOIN user_favorite uf ON (c.id = uf.capture_id)
 WHERE c.description LIKE '%'||?1||'%' OR c.name LIKE '%'||?1||'%' 
 OR c.data_hash = ?1 OR c.am2_hash = ?1
+AND (uf.user_id = ?2 OR uf.user_id IS NULL)
 GROUP BY c.id
 ORDER BY rate DESC, c.downloads DESC
-LIMIT ?3 OFFSET ?2
+LIMIT ?4 OFFSET ?3
 `
 
 type SearchCapturesParams struct {
 	Arg    sql.NullString
+	User   int64
 	Offset int64
 	Limit  int64
 }
@@ -81,11 +84,17 @@ type SearchCapturesRow struct {
 	CreatedAt   time.Time
 	DemoLink    sql.NullString
 	Rate        sql.NullFloat64
+	Fav         sql.NullInt64
 }
 
 // http: GET /captures
 func (q *Queries) SearchCaptures(ctx context.Context, arg SearchCapturesParams) ([]SearchCapturesRow, error) {
-	rows, err := q.db.QueryContext(ctx, searchCaptures, arg.Arg, arg.Offset, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, searchCaptures,
+		arg.Arg,
+		arg.User,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +112,7 @@ func (q *Queries) SearchCaptures(ctx context.Context, arg SearchCapturesParams) 
 			&i.CreatedAt,
 			&i.DemoLink,
 			&i.Rate,
+			&i.Fav,
 		); err != nil {
 			return nil, err
 		}

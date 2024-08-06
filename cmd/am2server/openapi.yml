@@ -284,6 +284,123 @@ paths:
           summary: UpdateUserName
           tags:
               - user
+  /users/{user_id}/captures:
+      get:
+          parameters:
+              - in: path
+                name: user_id
+                schema:
+                  format: int64
+                  type: integer
+              - in: query
+                name: limit
+                schema:
+                  format: int64
+                  type: integer
+              - in: query
+                name: offset
+                schema:
+                  format: int64
+                  type: integer
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              items:
+                                  $ref: '#/components/schemas/userListFavoriteCapturesRow'
+                              type: array
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: ListFavoriteCaptures
+          tags:
+              - user
+  /users/{user_id}/captures/{capture_id}:
+      delete:
+          parameters:
+              - in: path
+                name: user_id
+                schema:
+                  format: int64
+                  type: integer
+              - in: path
+                name: capture_id
+                schema:
+                  format: int64
+                  type: integer
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              properties:
+                                  last_insert_id:
+                                      format: int64
+                                      type: integer
+                                  rows_affected:
+                                      format: int64
+                                      type: integer
+                              type: object
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: RemoveFavoriteCapture
+          tags:
+              - user
+      post:
+          parameters:
+              - in: path
+                name: user_id
+                schema:
+                  format: int64
+                  type: integer
+              - in: path
+                name: capture_id
+                schema:
+                  format: int64
+                  type: integer
+          requestBody:
+              content:
+                  application/json:
+                      schema:
+                          properties: null
+                          type: object
+                  application/x-www-form-urlencoded:
+                      schema:
+                          properties: null
+                          type: object
+          responses:
+              "200":
+                  content:
+                      application/json:
+                          schema:
+                              properties:
+                                  last_insert_id:
+                                      format: int64
+                                      type: integer
+                                  rows_affected:
+                                      format: int64
+                                      type: integer
+                              type: object
+                  description: OK
+              default:
+                  content:
+                      text/plain:
+                          schema:
+                              type: string
+                  description: Error message
+          summary: AddFavoriteCapture
+          tags:
+              - user
   
   /captures:
     get:
@@ -343,6 +460,11 @@ paths:
           in: query
           schema:
             type: string
+        - name: user
+          in: query
+          schema:
+            type: integer
+            format: int64
         - name: offset
           in: query
           schema:
@@ -452,137 +574,6 @@ paths:
               schema:
                 type: string  
     
-  /users/{user_id}/captures:
-    get:
-      summary: ListFavoriteCaptures
-      tags:
-          - user
-      
-      
-      parameters:
-        - name: user_id
-          in: path
-          schema:
-            type: integer
-            format: int64
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            format: int64
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            format: int64
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/userListFavoriteCapturesRow"
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
-  /users/{user_id}/captures/{capture_id}:
-    post:
-      summary: AddFavoriteCapture
-      tags:
-          - user
-      
-      
-      parameters:
-        - name: user_id
-          in: path
-          schema:
-            type: integer
-            format: int64
-        - name: capture_id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  last_insert_id:
-                    type: integer
-                    format: int64
-                  rows_affected:
-                    type: integer
-                    format: int64
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    delete:
-      summary: RemoveFavoriteCapture
-      tags:
-          - user
-      
-      
-      parameters:
-        - name: user_id
-          in: path
-          schema:
-            type: integer
-            format: int64
-        - name: capture_id
-          in: path
-          schema:
-            type: integer
-            format: int64
-      
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  last_insert_id:
-                    type: integer
-                    format: int64
-                  rows_affected:
-                    type: integer
-                    format: int64
-          
-        "default":    
-          description: Error message
-          content:
-            text/plain:
-              schema:
-                type: string  
-    
   
 components:
   schemas:
@@ -635,6 +626,28 @@ components:
             name:
                 type: string
         type: object
+    userListFavoriteCapturesRow:
+        properties:
+            created_at:
+                format: date-time
+                type: string
+            demo_link:
+                type: string
+            description:
+                type: string
+            downloads:
+                format: int64
+                type: integer
+            has_cab:
+                type: boolean
+            id:
+                format: int64
+                type: integer
+            name:
+                type: string
+            type:
+                type: string
+        type: object
     
     captureSearchCapturesRow:
       type: object
@@ -661,6 +674,9 @@ components:
         rate:
           type: number
           format: double
+        fav:
+          type: integer
+          format: int64
     reviewReview:
       type: object
       properties:
@@ -684,28 +700,6 @@ components:
         updated_at:
           type: string
           format: date-time
-    userListFavoriteCapturesRow:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        description:
-          type: string
-        downloads:
-          type: integer
-          format: int64
-        has_cab:
-          type: boolean
-        type:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        demo_link:
-          type: string
     userUser:
       type: object
       properties:

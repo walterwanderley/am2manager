@@ -27,7 +27,11 @@
             <h2 class="center light-blue-text"><i class="material-icons">group</i></h2>
             <h5 class="center"><a href="#" hx-get="/new-capture" hx-push-url="true" hx-target="#main-section">Share your Captures</a></h5>
 
-            <p class="light">Share your Captures (am2 or am2data) with the community.</p>
+            <p class="light">Share your Captures (am2 or am2data) with the community.
+            {{if not User.Logged}}
+                <a href="/login">SignIn</a> to write comments and create your favorite captures list.</p>
+            {{end}}
+        </p>
         </div>
     </div>
 

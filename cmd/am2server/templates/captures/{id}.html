@@ -43,6 +43,8 @@
             <div class="row center">
                 <a href="/captures/{{.ID}}/file" class="waves-effect waves-light btn"><i
                         class="material-icons right">download</i>Download</a>
+                    {{if LoggedIn}}<a href="#" hx-post="/users/{{User.ID}}/captures/{{.ID}}" hx-target="#messages" class="waves-effect waves-light btn">
+                        <i class="material-icons right">favorite</i>Mark as Favorite</a>{{end}}
             </div>
             <div class="row center">
                 <p>Downloads Count: {{.Downloads}}</p>

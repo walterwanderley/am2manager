@@ -19,6 +19,7 @@ type Service struct {
 func (s *Service) handleSearchCaptures() http.HandlerFunc {
 	type request struct {
 		Arg    *string `form:"arg" json:"arg"`
+		User   int64   `form:"user" json:"user"`
 		Offset int64   `form:"offset" json:"offset"`
 		Limit  int64   `form:"limit" json:"limit"`
 	}
@@ -32,12 +33,21 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 		CreatedAt   time.Time `json:"created_at,omitempty"`
 		DemoLink    *string   `json:"demo_link,omitempty"`
 		Rate        *float64  `json:"rate,omitempty"`
+		Fav         *int64    `json:"fav,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req request
 		if str := r.URL.Query().Get("arg"); str != "" {
 			req.Arg = &str
+		}
+		if str := r.URL.Query().Get("user"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				req.User = v
+			}
 		}
 		if str := r.URL.Query().Get("offset"); str != "" {
 			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
@@ -59,6 +69,7 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 		if req.Arg != nil {
 			arg.Arg = sql.NullString{Valid: true, String: *req.Arg}
 		}
+		arg.User = req.User
 		arg.Offset = req.Offset
 		arg.Limit = req.Limit
 
@@ -87,6 +98,9 @@ func (s *Service) handleSearchCaptures() http.HandlerFunc {
 			}
 			if r.Rate.Valid {
 				item.Rate = &r.Rate.Float64
+			}
+			if r.Fav.Valid {
+				item.Fav = &r.Fav.Int64
 			}
 			res = append(res, item)
 		}

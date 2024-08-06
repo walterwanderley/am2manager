@@ -20,6 +20,9 @@ type CustomService struct {
 
 func (s *CustomService) RegisterHandlers(mux *http.ServeMux) {
 	s.Service.RegisterHandlers(mux)
+	mux.HandleFunc("POST /users/{user_id}/captures/{capture_id}", s.handleAddFavoriteCapture())
+	mux.HandleFunc("GET /users/{user_id}/captures", s.handleListFavoriteCaptures())
+	mux.HandleFunc("DELETE /users/{user_id}/captures/{capture_id}", s.handleRemoveFavoriteCapture())
 	mux.HandleFunc("GET /users/{id}", s.handleGetUser())
 	mux.HandleFunc("PATCH /users/{id}/name", s.handleUpdateUserName())
 }
@@ -129,10 +132,191 @@ func (s *CustomService) handleUpdateUserName() http.HandlerFunc {
 		_, err = s.querier.updateUserName(r.Context(), arg)
 		if err != nil {
 			slog.Error("sql call failed", "error", err, "method", "UpdateUserName")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			htmx.Error(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		htmx.Success(w, r, http.StatusOK, "User data updated!")
+	}
+}
+
+func (s *CustomService) handleAddFavoriteCapture() http.HandlerFunc {
+	type request struct {
+		UserID    int64 `form:"user_id" json:"user_id"`
+		CaptureID int64 `form:"capture_id" json:"capture_id"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req request
+		if str := r.PathValue("user_id"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadRequest, err.Error())
+				return
+			} else {
+				req.UserID = v
+			}
+		}
+		if str := r.PathValue("capture_id"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadGateway, err.Error())
+				return
+			} else {
+				req.CaptureID = v
+			}
+		}
+		var arg addFavoriteCaptureParams
+		arg.UserID = req.UserID
+		arg.CaptureID = req.CaptureID
+
+		_, err := s.querier.addFavoriteCapture(r.Context(), arg)
+		if err != nil {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				htmx.Warning(w, r, http.StatusBadRequest, "Already a favorite capture")
+				return
+			}
+			slog.Error("sql call failed", "error", err, "method", "AddFavoriteCapture")
+			htmx.Error(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		htmx.Success(w, r, http.StatusOK, "Capture added to favorites list")
+	}
+}
+
+func (s *CustomService) handleListFavoriteCaptures() http.HandlerFunc {
+	type request struct {
+		UserID int64 `form:"user_id" json:"user_id"`
+		Limit  int64 `form:"limit" json:"limit"`
+		Offset int64 `form:"offset" json:"offset"`
+	}
+	type response struct {
+		ID          int64     `json:"id,omitempty"`
+		Name        string    `json:"name,omitempty"`
+		Description *string   `json:"description,omitempty"`
+		Downloads   int64     `json:"downloads,omitempty"`
+		HasCab      *bool     `json:"has_cab,omitempty"`
+		Type        string    `json:"type,omitempty"`
+		CreatedAt   time.Time `json:"created_at,omitempty"`
+		DemoLink    *string   `json:"demo_link,omitempty"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		r = r.WithContext(templates.ContextWithTemplates(r.Context(), "users/{user_id}/captures.html"))
+		var req request
+
+		if str := r.PathValue("user_id"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+				return
+			} else {
+				req.UserID = v
+			}
+		} else {
+			htmx.Error(w, r, http.StatusBadRequest, "User ID is required")
+			return
+		}
+
+		if str := r.URL.Query().Get("limit"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+				return
+			} else {
+				req.Limit = v
+			}
+		}
+		if str := r.URL.Query().Get("offset"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+				return
+			} else {
+				req.Offset = v
+			}
+		}
+		var arg listFavoriteCapturesParams
+		arg.UserID = req.UserID
+		arg.Limit = req.Limit
+		arg.Offset = req.Offset
+
+		if arg.Limit == 0 {
+			arg.Limit = 10
+		}
+
+		result, err := s.querier.listFavoriteCaptures(r.Context(), arg)
+		if err != nil {
+			slog.Error("sql call failed", "error", err, "method", "ListFavoriteCaptures")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res := make([]response, 0)
+		for _, r := range result {
+			var item response
+			item.ID = r.ID
+			item.Name = r.Name
+			if r.Description.Valid {
+				item.Description = &r.Description.String
+			}
+			item.Downloads = r.Downloads
+			if r.HasCab.Valid {
+				item.HasCab = &r.HasCab.Bool
+			}
+			item.Type = r.Type
+			item.CreatedAt = r.CreatedAt
+			if r.DemoLink.Valid {
+				item.DemoLink = &r.DemoLink.String
+			}
+			res = append(res, item)
+		}
+		server.Encode(w, r, http.StatusOK, res)
+	}
+}
+
+func (s *CustomService) handleRemoveFavoriteCapture() http.HandlerFunc {
+	type request struct {
+		UserID    int64 `form:"user_id" json:"user_id"`
+		CaptureID int64 `form:"capture_id" json:"capture_id"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req request
+		if str := r.PathValue("user_id"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+				return
+			} else {
+				req.UserID = v
+			}
+		} else {
+			htmx.Error(w, r, http.StatusBadRequest, "User ID is required")
+			return
+		}
+
+		user := templates.UserFromContext(r.Context())
+		if !user.Logged() {
+			htmx.Error(w, r, http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
+			return
+		}
+		if req.UserID != user.ID {
+			htmx.Error(w, r, http.StatusForbidden, http.StatusText(http.StatusForbidden))
+			return
+		}
+
+		if str := r.PathValue("capture_id"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				htmx.Error(w, r, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+				return
+			} else {
+				req.CaptureID = v
+			}
+		}
+
+		var arg removeFavoriteCaptureParams
+		arg.UserID = req.UserID
+		arg.CaptureID = req.CaptureID
+
+		_, err := s.querier.removeFavoriteCapture(r.Context(), arg)
+		if err != nil {
+			slog.Error("sql call failed", "error", err, "method", "RemoveFavoriteCapture")
+			htmx.Error(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		htmx.Success(w, r, http.StatusOK, "Capture removed from favorites")
 	}
 }
 

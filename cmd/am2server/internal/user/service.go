@@ -5,7 +5,6 @@ package user
 import (
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server"
@@ -13,57 +12,6 @@ import (
 
 type Service struct {
 	querier *Queries
-}
-
-func (s *Service) handleAddFavoriteCapture() http.HandlerFunc {
-	type request struct {
-		UserID    int64 `form:"user_id" json:"user_id"`
-		CaptureID int64 `form:"capture_id" json:"capture_id"`
-	}
-	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		req, err := server.Decode[request](r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-			return
-		}
-		if str := r.PathValue("user_id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.UserID = v
-			}
-		}
-		if str := r.PathValue("capture_id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.CaptureID = v
-			}
-		}
-		var arg AddFavoriteCaptureParams
-		arg.UserID = req.UserID
-		arg.CaptureID = req.CaptureID
-
-		result, err := s.querier.AddFavoriteCapture(r.Context(), arg)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "AddFavoriteCapture")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
-	}
 }
 
 func (s *Service) handleContUsers() http.HandlerFunc {
@@ -118,129 +66,5 @@ func (s *Service) handleGetUserByEmail() http.HandlerFunc {
 			res.Picture = &result.Picture.String
 		}
 		server.Encode(w, r, http.StatusOK, res)
-	}
-}
-
-func (s *Service) handleListFavoriteCaptures() http.HandlerFunc {
-	type request struct {
-		UserID int64 `form:"user_id" json:"user_id"`
-		Limit  int64 `form:"limit" json:"limit"`
-		Offset int64 `form:"offset" json:"offset"`
-	}
-	type response struct {
-		ID          int64     `json:"id,omitempty"`
-		Name        string    `json:"name,omitempty"`
-		Description *string   `json:"description,omitempty"`
-		Downloads   int64     `json:"downloads,omitempty"`
-		HasCab      *bool     `json:"has_cab,omitempty"`
-		Type        string    `json:"type,omitempty"`
-		CreatedAt   time.Time `json:"created_at,omitempty"`
-		DemoLink    *string   `json:"demo_link,omitempty"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req request
-		if str := r.PathValue("user_id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.UserID = v
-			}
-		}
-		if str := r.URL.Query().Get("limit"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.Limit = v
-			}
-		}
-		if str := r.URL.Query().Get("offset"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.Offset = v
-			}
-		}
-		var arg ListFavoriteCapturesParams
-		arg.UserID = req.UserID
-		arg.Limit = req.Limit
-		arg.Offset = req.Offset
-
-		result, err := s.querier.ListFavoriteCaptures(r.Context(), arg)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "ListFavoriteCaptures")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		res := make([]response, 0)
-		for _, r := range result {
-			var item response
-			item.ID = r.ID
-			item.Name = r.Name
-			if r.Description.Valid {
-				item.Description = &r.Description.String
-			}
-			item.Downloads = r.Downloads
-			if r.HasCab.Valid {
-				item.HasCab = &r.HasCab.Bool
-			}
-			item.Type = r.Type
-			item.CreatedAt = r.CreatedAt
-			if r.DemoLink.Valid {
-				item.DemoLink = &r.DemoLink.String
-			}
-			res = append(res, item)
-		}
-		server.Encode(w, r, http.StatusOK, res)
-	}
-}
-
-func (s *Service) handleRemoveFavoriteCapture() http.HandlerFunc {
-	type request struct {
-		UserID    int64 `form:"user_id" json:"user_id"`
-		CaptureID int64 `form:"capture_id" json:"capture_id"`
-	}
-	type response struct {
-		LastInsertId int64 `json:"last_insert_id"`
-		RowsAffected int64 `json:"rows_affected"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req request
-		if str := r.PathValue("user_id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.UserID = v
-			}
-		}
-		if str := r.PathValue("capture_id"); str != "" {
-			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			} else {
-				req.CaptureID = v
-			}
-		}
-		var arg RemoveFavoriteCaptureParams
-		arg.UserID = req.UserID
-		arg.CaptureID = req.CaptureID
-
-		result, err := s.querier.RemoveFavoriteCapture(r.Context(), arg)
-		if err != nil {
-			slog.Error("sql call failed", "error", err, "method", "RemoveFavoriteCapture")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		lastInsertId, _ := result.LastInsertId()
-		rowsAffected, _ := result.RowsAffected()
-		server.Encode(w, r, http.StatusOK, response{
-			LastInsertId: lastInsertId,
-			RowsAffected: rowsAffected,
-		})
 	}
 }

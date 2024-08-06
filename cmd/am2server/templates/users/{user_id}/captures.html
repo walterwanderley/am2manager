@@ -1,22 +1,18 @@
 {{define "content"}}
-{{if not .}}<p>no captures found</p>{{end}}
+{{if not .}}<p>no favorite captures found</p>{{end}}
 <ul class="collapsible">
     {{range .}}
     <li>
-        <div class="collapsible-header {{if .Favorite}}yellow lighten-4{{end}}"><i class="material-icons">
+        <div class="collapsible-header"><i class="material-icons">
                 {{if eq .Type "CLEAN"}}volume_mute{{else if eq .Type "CRUNCH"}}volume_down{{else}}volume_up{{end}}
             </i><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a>
-            {{if .HasCab}}(IR){{end}}<span class="badge"><a href="#" hx-get="/captures/{{.ID}}#reviews" hx-target="#main-section" hx-push-url="true"><i class="material-icons">star</i>{{.Rate}}</a>&nbsp;&nbsp;<a href="/captures/{{.ID}}/file">
+            {{if .HasCab}}(IR){{end}}<span class="badge"><a href="#" hx-get="/captures/{{.ID}}#reviews" hx-target="#main-section" hx-push-url="true"><a href="/captures/{{.ID}}/file">
                     <i class="material-icons">download</i></a>{{.Downloads}}</span>
         </div>
         <div class="collapsible-body"><span>{{.Description}}</span>
             <p><a href="/captures/{{.ID}}/file" class="waves-effect waves-light btn">
-                    <i class="material-icons right">download</i>Download</a> 
-                    {{if User.Logged}}{{if .Favorite}}<a href="#" hx-delete="/users/{{User.ID}}/captures/{{.ID}}" hx-target="#messages" class="waves-effect waves-light btn">
-                        <i class="material-icons right">favorite_border</i>Remove from Favorite</a>{{else}}
-                        <a href="#" hx-post="/users/{{User.ID}}/captures/{{.ID}}" hx-target="#messages" class="waves-effect waves-light btn">
-                            <i class="material-icons right">favorite</i>Mark as Favorite</a>
-                        {{end}}
+                    <i class="material-icons right">download</i>Download</a> {{if User.Logged}}<a href="#" hx-delete="/users/{{User.ID}}/captures/{{.ID}}" hx-target="#messages" class="waves-effect waves-light btn">
+                        <i class="material-icons right">favorite_border</i>Remove from Favorite</a>
                         <a href="#" hx-get="/captures/{{.ID}}#reviews" hx-target="#main-section" hx-push-url="true" class="waves-effect waves-light btn">
                         <i class="material-icons right">star</i>Add Review</a>{{end}}</p>
             {{if EmbedFrame .DemoLink}}

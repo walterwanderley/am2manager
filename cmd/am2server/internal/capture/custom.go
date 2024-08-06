@@ -372,6 +372,7 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 		Type        string    `json:"type,omitempty"`
 		DemoLink    string    `json:"demo_link,omitempty"`
 		Rate        float64   `json:"rate,omitempty"`
+		Favorite    bool      `json:"favorite,omitempty"`
 		CreatedAt   time.Time `json:"created_at,omitempty"`
 	}
 
@@ -405,6 +406,9 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			arg.Limit = 10
 		}
 
+		user := templates.UserFromContext(r.Context())
+		arg.User = user.ID
+
 		result, err := s.querier.SearchCaptures(r.Context(), arg)
 		if err != nil {
 			slog.Error("sql call failed", "error", err, "method", "SearchCaptures")
@@ -435,6 +439,9 @@ func (s *CustomService) handleSearchCaptures() http.HandlerFunc {
 			item.DemoLink = r.DemoLink.String
 			if r.Rate.Valid {
 				item.Rate = r.Rate.Float64
+			}
+			if r.Fav.Valid && user.Logged() {
+				item.Favorite = r.Fav.Int64 == user.ID
 			}
 			res = append(res, item)
 		}

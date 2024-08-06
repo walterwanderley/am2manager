@@ -5,9 +5,6 @@ package user
 import "net/http"
 
 func (s *Service) RegisterHandlers(mux *http.ServeMux) {
-	mux.HandleFunc("POST /users/{user_id}/captures/{capture_id}", s.handleAddFavoriteCapture())
 	mux.HandleFunc("GET /users/count", s.handleContUsers())
 	mux.HandleFunc("GET /users", s.handleGetUserByEmail())
-	mux.HandleFunc("GET /users/{user_id}/captures", s.handleListFavoriteCaptures())
-	mux.HandleFunc("DELETE /users/{user_id}/captures/{capture_id}", s.handleRemoveFavoriteCapture())
 }
