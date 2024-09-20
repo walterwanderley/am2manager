@@ -42,3 +42,11 @@ FROM user_favorite uf, capture c
 WHERE uf.capture_id = c.id AND uf.user_id = ?
 ORDER BY uf.created_at DESC
 LIMIT ? OFFSET ?;
+
+/* name: ListAllFavoriteCaptures :many */
+/* http: GET /favorites */
+SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link, uf.user_id
+FROM user_favorite uf, capture c
+WHERE uf.capture_id = c.id
+ORDER BY uf.created_at DESC
+LIMIT ? OFFSET ?;

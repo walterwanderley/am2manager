@@ -524,6 +524,40 @@ paths:
               schema:
                 type: string  
     
+  /favorites:
+    get:
+      tags:
+        - user
+      summary: ListAllFavoriteCaptures
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            format: int64
+      
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/userListAllFavoriteCapturesRow"
+          
+        "default":    
+          description: Error message
+          content:
+            text/plain:
+              schema:
+                type: string  
+    
   /users:
     get:
       summary: GetUserByEmail
@@ -700,6 +734,31 @@ components:
         updated_at:
           type: string
           format: date-time
+    userListAllFavoriteCapturesRow:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        downloads:
+          type: integer
+          format: int64
+        has_cab:
+          type: boolean
+        type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        demo_link:
+          type: string
+        user_id:
+          type: integer
+          format: int64
     userUser:
       type: object
       properties:

@@ -85,11 +85,33 @@ func (p *Pagination) TotalPages() int64 {
 
 func (p *Pagination) PageNumbers() []int64 {
 	total := p.TotalPages()
-	pages := make([]int64, total)
-	var i int64
-	for i = 0; i < total; i++ {
-		pages[i] = i + 1
+	pages := make([]int64, 0)
+	var begin, end int64
+	end = total - 1
+	if total > 10 {
+		pages = append(pages, 1)
+		begin = p.CurrentPage() - 3
+		if begin < 1 {
+			begin = 1
+		}
+		if begin > 1 {
+			pages = append(pages, 0) // ...
+		}
+		end = p.CurrentPage() + 3
+		if end >= total {
+			end = total - 1
+		}
 	}
+
+	for i := begin; i < end; i++ {
+		pages = append(pages, i+1)
+	}
+
+	if end+1 < total {
+		pages = append(pages, 0) // ...
+	}
+	pages = append(pages, total)
+
 	return pages
 }
 

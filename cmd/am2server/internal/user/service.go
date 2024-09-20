@@ -5,6 +5,7 @@ package user
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/walterwanderley/am2manager/cmd/am2server/internal/server"
@@ -64,6 +65,79 @@ func (s *Service) handleGetUserByEmail() http.HandlerFunc {
 		}
 		if result.Picture.Valid {
 			res.Picture = &result.Picture.String
+		}
+		server.Encode(w, r, http.StatusOK, res)
+	}
+}
+
+func (s *Service) handleListAllFavoriteCaptures() http.HandlerFunc {
+	type request struct {
+		Limit  int64 `form:"limit" json:"limit"`
+		Offset int64 `form:"offset" json:"offset"`
+	}
+	type response struct {
+		ID          int64     `json:"id,omitempty"`
+		Name        string    `json:"name,omitempty"`
+		Description *string   `json:"description,omitempty"`
+		Downloads   int64     `json:"downloads,omitempty"`
+		HasCab      *bool     `json:"has_cab,omitempty"`
+		Type        string    `json:"type,omitempty"`
+		CreatedAt   time.Time `json:"created_at,omitempty"`
+		DemoLink    *string   `json:"demo_link,omitempty"`
+		UserID      int64     `json:"user_id,omitempty"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req request
+		if str := r.URL.Query().Get("limit"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				req.Limit = v
+			}
+		}
+		if str := r.URL.Query().Get("offset"); str != "" {
+			if v, err := strconv.ParseInt(str, 10, 64); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				req.Offset = v
+			}
+		}
+		var arg ListAllFavoriteCapturesParams
+		arg.Limit = req.Limit
+		arg.Offset = req.Offset
+
+		if arg.Limit == 0 {
+			arg.Limit = 10
+		}
+
+		result, err := s.querier.ListAllFavoriteCaptures(r.Context(), arg)
+		if err != nil {
+			slog.Error("sql call failed", "error", err, "method", "ListAllFavoriteCaptures")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res := make([]response, 0)
+		for _, r := range result {
+			var item response
+			item.ID = r.ID
+			item.Name = r.Name
+			if r.Description.Valid {
+				item.Description = &r.Description.String
+			}
+			item.Downloads = r.Downloads
+			if r.HasCab.Valid {
+				item.HasCab = &r.HasCab.Bool
+			}
+			item.Type = r.Type
+			item.CreatedAt = r.CreatedAt
+			if r.DemoLink.Valid {
+				item.DemoLink = &r.DemoLink.String
+			}
+			item.UserID = r.UserID
+			res = append(res, item)
 		}
 		server.Encode(w, r, http.StatusOK, res)
 	}

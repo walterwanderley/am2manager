@@ -38,8 +38,9 @@
             hx-target="#main-section" hx-push-url="true" {{end}}>
             <i class="material-icons">chevron_left</i></a></li>
     {{range Pagination.PageNumbers}}
+    {{if eq . 0}}<li>...</li>{{else}}
     <li class="{{if eq . Pagination.CurrentPage}}active{{else}}waves-effect{{end}}"><a href="#"
-            hx-get="{{Pagination.URLPage .}}" hx-target="#main-section" hx-push-url="true">{{.}}</a></li>
+            hx-get="{{Pagination.URLPage .}}" hx-target="#main-section" hx-push-url="true">{{.}}</a></li>{{end}}
     {{end}}
     <li class="{{if lt Pagination.CurrentPage Pagination.TotalPages}}waves-effect{{else}}disabled{{end}}">
         <a href="#" {{if lt Pagination.CurrentPage Pagination.TotalPages}}
