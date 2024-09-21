@@ -91,15 +91,20 @@ func (p *Pagination) PageNumbers() []int64 {
 	if total > 10 {
 		pages = append(pages, 1)
 		begin = p.CurrentPage() - 3
+
+		end = p.CurrentPage() + 3
+
 		if begin < 1 {
+			end += (begin * -1)
 			begin = 1
 		}
+		if end >= total {
+			begin += (total - end)
+			end = total - 1
+		}
+
 		if begin > 1 {
 			pages = append(pages, 0) // ...
-		}
-		end = p.CurrentPage() + 3
-		if end >= total {
-			end = total - 1
 		}
 	}
 
@@ -166,6 +171,7 @@ func (p *Pagination) URL(limit, offset int64) string {
 		if k == "limit" || k == "offset" {
 			continue
 		}
+
 		url.WriteString(fmt.Sprintf("%s=%s&", k, p.request.URL.Query().Get(k)))
 	}
 	url.WriteString(fmt.Sprintf("limit=%d&offset=%d", limit, offset))

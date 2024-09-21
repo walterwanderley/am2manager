@@ -17,18 +17,6 @@ SELECT * FROM capture WHERE id = ?;
 UPDATE capture SET downloads = downloads + 1 WHERE id = ?
 RETURNING data, name;
 
-/* name: SearchCaptures :many */
-/* http: GET /captures */
-SELECT c.id, c.name, c.description, c.downloads, c.has_cab, c.type, c.created_at, c.demo_link, AVG(r.rate) rate, uf.user_id fav
-FROM capture c LEFT OUTER JOIN review r ON (c.id = r.capture_id)
-LEFT OUTER JOIN user_favorite uf ON (c.id = uf.capture_id)
-WHERE c.description LIKE '%'||sqlc.arg('arg')||'%' OR c.name LIKE '%'||sqlc.arg('arg')||'%' 
-OR c.data_hash = sqlc.arg('arg') OR c.am2_hash = sqlc.arg('arg')
-AND (uf.user_id = sqlc.arg('user') OR uf.user_id IS NULL)
-GROUP BY c.id
-ORDER BY rate DESC, c.downloads DESC
-LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
-
 /* name: totalSearchCaptures :one */
 SELECT count(*)
 FROM capture c
