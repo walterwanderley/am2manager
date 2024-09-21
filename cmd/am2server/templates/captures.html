@@ -2,7 +2,7 @@
 {{if not .}}<p>no captures found</p>
 {{else}}
 <div class="row">
-    <div class="input-field col s3">
+    <div class="input-field">
         <select id="orderBy" name="orderBy" hx-get="/captures?limit=10&offset=0" hx-target="#main-section" hx-push-url="true">
             <option value="1" {{if not (eq "2" (Query "orderBy"))}}selected{{end}}>Most downloaded</option>
             <option value="2" {{if eq "2" (Query "orderBy")}}selected{{end}}>Most recent</option>
