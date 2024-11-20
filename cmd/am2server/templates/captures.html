@@ -20,7 +20,7 @@
             </i><a href="#" hx-get="/captures/{{.ID}}" hx-target="#main-section" hx-push-url="true">{{.Name}}</a>
             {{if .HasCab}}(IR){{end}}<span class="badge"><a href="#" hx-get="/captures/{{.ID}}#reviews"
                     hx-target="#main-section" hx-push-url="true"><i
-                        class="material-icons">star</i>{{.Rate}}</a>&nbsp;&nbsp;<a href="/captures/{{.ID}}/file">
+                        class="material-icons">star</i>{{formatRate .Rate}}</a>&nbsp;&nbsp;<a href="/captures/{{.ID}}/file">
                     <i class="material-icons">download</i></a>{{.Downloads}}</span>
         </div>
         <div class="collapsible-body"><span>{{.Description}}</span>

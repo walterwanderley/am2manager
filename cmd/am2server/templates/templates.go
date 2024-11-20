@@ -36,7 +36,11 @@ const (
 var (
 	//go:embed *
 	templatesFS embed.FS
-	funcs       = template.FuncMap{}
+	funcs       = template.FuncMap{
+		"formatRate": func(f float64) string {
+			return fmt.Sprintf("%.1f", f)
+		},
+	}
 
 	Commit, Version string
 

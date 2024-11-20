@@ -124,14 +124,14 @@
                 <table>
                     <thead>
                         <td>Comment</td>
-                        <td>Rate{{if gt .Rate 0.0}}: {{.Rate}}{{end}}</td>
+                        <td>Rate{{if gt .Rate 0.0}}: {{formatRate .Rate}}{{end}}</td>
                         <td></td>
                     </thead>
                     <tbody>
                         {{range .Reviews}}
                         <tr id="review_{{.ID}}">
                             <td>{{.Comment.String}}</td>
-                            <td>{{.Rate}}</td>
+                            <td>{{formatRate .Rate}}</td>
                             <td>{{if User.CanEdit .ID}}<a href="#" hx-delete="/reviews/{{.ID}}" hx-target="#review_{{.ID}}"><i class="material-icons">delete</i></a>{{end}}</td>
                         </tr>
                         {{end}}
