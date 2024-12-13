@@ -37,8 +37,12 @@ var (
 	//go:embed *
 	templatesFS embed.FS
 	funcs       = template.FuncMap{
-		"formatRate": func(f float64) string {
-			return fmt.Sprintf("%.1f", f)
+		"formatRate": func(rate any) string {
+			if f, ok := rate.(float64); ok {
+				return fmt.Sprintf("%.1f", f)
+			}
+
+			return fmt.Sprint(rate)
 		},
 	}
 
