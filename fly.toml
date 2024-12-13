@@ -22,7 +22,7 @@ primary_region = 'gru'
   LITESTREAM_FORCE_PATH_STYLE = 'true'
   DSN = '/data/as2manager.db'
   REDIRECT_SERVER = 'https://am2manager.fly.dev'
-  GOMEMLIMIT = '400MiB' 
+  GOMEMLIMIT = '200MiB' 
   ADMIN = 'walterwanderley@gmail.com'
 
 
@@ -35,7 +35,7 @@ primary_region = 'gru'
   processes = ['app']
 
 [[vm]]
-  memory = '512mb'
+  memory = '256mb'
   cpu_kind = 'shared'
   cpus = 1
 
