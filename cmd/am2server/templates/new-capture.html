@@ -1,51 +1,12 @@
 {{define "content"}}
 <div class="row">
-    <div class="col s12 m4">
-        <h5 class="center">Share your Captures</h5>
+    <div class="col s12 m6">
+        <h5 class="center">Please, use the <a href="https://community.m-vave.com/">M-Vave Community</a> to share captures</h5>
     </div>
-    <form class="col s12" hx-post="/captures" hx-target="#messages" enctype="multipart/form-data">
-        <div class="row">
-            <div class="file-field input-field col s6">
-                <div class="btn">
-                    <span>am2 / am2Data file</span>
-                    <input type="file" name="data" required>
-                </div>
-                <div class="file-path-wrapper">
-                    <input class="file-path validate" type="text">
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
-                <textarea id="description" name="description" class="materialize-textarea" rows="5"></textarea>
-                <label for="decription">Capture Description</label>
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s3">
-                <select name="type">
-                    <option value="CLEAN">Clean</option>
-                    <option value="CRUNCH">Crunch</option>
-                    <option value="HI-GAIN">Hi-Gain</option>
-                </select>
-                <label>Type</label>
-            </div>
-            <div class="input-field col s6">
-                <input id="demo_link" name="demo_link" type="text" maxlength="200">
-                <label for="demo_link">Youtube embed link or capture audio demo</label>
-            </div>
-        </div>
-        <div class="row">
-            <p>
-                <label>
-                    <input type="checkbox" name="has_cab" />
-                    <span>With Cabinet Simulator (IR)</span>
-                </label>
-            </p>
-        </div>
-        <button class="btn waves-effect waves-light" type="submit" name="action">Submit
-            <i class="material-icons right">send</i>
-        </button>
-    </form>
+</div>
+<div class="row">
+    <div class="col s12 m6">
+        <h5 class="center">https://am2manager.fly.dev/ will be deactivated in a couple of days!</h5>
+    </div>
 </div>
 {{end}}

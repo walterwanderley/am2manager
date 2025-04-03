@@ -4,7 +4,7 @@ Tools to manage **am2** and **am2data** files.
 
 ## am2server
 
-[am2manager.fly.dev](https://am2manager.fly.dev)
+[am2manager.fly.dev](https://am2manager.fly.dev) (deprecated, use https://community.m-vave.com/)
 
 ## am2converter
 
